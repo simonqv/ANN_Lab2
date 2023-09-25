@@ -3,20 +3,9 @@ from matplotlib import pyplot as plt
 
 import plotter
 
-SIGMA2 = 0.1
+SIGMA2 = 1.8
+EPOCH = 20
 
-
-def sin2x(x):
-    return np.sin(2*x)
-
-
-def box2x(x):
-    return 1 if np.sin(2*x) >= 0 else -1
-
-
-def phi_i(x, mu):
-    phi = np.exp((- (np.linalg.norm(x - mu[:2]) ** 2) / (2*mu[2])))
-    return phi
 
 
 def generate_set():
@@ -62,6 +51,34 @@ def make_node_matrix():
 
     return four, twelve, twenty
 
+def make_phi_matrix(node_matrix, input_list):
+
+    phi_matrix = np.zeros((len(input_list), len(node_matrix)))
+
+    for i, x in enumerate(input_list):
+        for j, node in enumerate(node_matrix):
+            phi_matrix[i, j] = phi_i(x, node)
+
+    return phi_matrix
+
+
+def batch_least_squares(phi_mat, init_weights, train):
+    #for node in range(len(phi_mat[0])):
+    # calculate weight matrix with least square method
+    phiT_phi = np.dot(phi_mat.T, phi_mat)
+
+    phi_f = np.dot(phi_mat.T, train).reshape(-1, 1)
+    print
+    w = np.linalg.solve(phiT_phi, phi_f)
+   # w_test= np.linalg.solve(phiT_phi, phi_f_test)
+    #w, _ ,_ , _ = np.linalg.lstsq(phiT_phi, phi_f, rcond=None)
+   # print(w_test.shape)
+    #output = np.dot(phi_mat, w)
+    #print(output-train)
+    
+    return w
+
+
 
 def task1():
     col, train_sin, train_box, test_sin, test_box = generate_set()
@@ -71,10 +88,69 @@ def task1():
     # matrix small, medium, large
     m1, m2, m3 = make_node_matrix()
     plotter.points(m1, m2, m3)
+    
+    # train the network by adjusting weights (least square error)
+    # Init weights
+    init_w_m1 = np.random.normal(0, 0.5, len(m1))
+    init_w_m2 = np.random.normal(0, 0.5, len(m2))
+    init_w_m3 = np.random.normal(0, 0.5, len(m3))
+
+    # phi matrix for sin
+    phi_4_sin = make_phi_matrix(m1, train_sin)
+    phi_12_sin = make_phi_matrix(m2, train_sin)
+    phi_20_sin = make_phi_matrix(m3, train_sin)
+
+    # phi matrix for box function
+    phi_4_box = make_phi_matrix(m1, train_box)
+    phi_12_box = make_phi_matrix(m2, train_box)
+    phi_20_box = make_phi_matrix(m3, train_box)
+
+    w_4_sin = batch_least_squares(phi_4_sin, init_w_m1, train_sin)
+    w_12_sin = batch_least_squares(phi_12_sin, init_w_m2, train_sin)
+    w_20_sin = batch_least_squares(phi_20_sin, init_w_m3, train_sin)
+
+    w_4_box = batch_least_squares(phi_4_box, init_w_m1, train_box)
+    w_12_box = batch_least_squares(phi_12_box, init_w_m2, train_box)
+    w_20_box = batch_least_squares(phi_20_box, init_w_m3, train_box)
+
+    # test on hold out set
+
+    phi_4_sin_test  = make_phi_matrix(m1, test_sin)
+    phi_12_sin_test  = make_phi_matrix(m2, test_sin)
+
+    out_4 = np.dot(phi_4_sin_test, w_4_sin)
+
+    out = np.dot(phi_12_sin, w_12_sin)
+    out_test = np.dot(phi_12_sin_test, w_12_sin)
+  
+    x_axis = np.arange(0, 2*np.pi, 0.1)
+    # plt.plot(x_axis, out)
+
+    plt.plot(x_axis, out_4, label="4")
+
+    plt.plot(np.arange(0, 2*np.pi, 0.1), out_test)
+    plt.legend()
+    plt.show()
+
+
+
+
+def sin2x(x):
+    return np.sin(2*x)
+
+
+def box2x(x):
+    return 1 if np.sin(2*x) >= 0 else -1
+
+
+def phi_i(x, mu):
+    phi = np.exp((- (np.linalg.norm(x - mu[:2]) ** 2) / (2*mu[2])))
+    return phi
+
 
     # TODO: Make matrix of phi_i thiny.
 
-    plt.show()
+   # plt.show()
 
 
 def main(task):
