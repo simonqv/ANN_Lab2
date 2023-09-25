@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 
 import plotter
 
-SIGMA2 = 3 # necessary for 4 nodes but even better with higher
+SIGMA2 = 0.6 # necessary for 4 nodes but even better with higher
 EPOCH = 20
 
 
@@ -72,12 +72,19 @@ def batch_least_squares(phi_mat, train):
     
     return w
 
-
+def residual_err(output, targets):
+    # average absolute difference between the network outputs and the desirable target values
+    diff = np.abs(targets-output)
+    avg_err = np.sum(diff)/len(output)
+  
+    return avg_err
 
 def task1():
     col, train_sin, train_box, test_sin, test_box = generate_set()
     # matrix small, medium, large
     m1, m2, m3 = make_node_matrix()
+
+    x = np.arange(0, 2*np.pi, 0.1)
 
     # plot true functions and starting points
     # plotter.sin_and_box(col, train_sin, train_box, test_sin, test_box)
@@ -91,6 +98,7 @@ def task1():
     # init_w_m2 = np.random.normal(0, 0.5, len(m2))
     # init_w_m3 = np.random.normal(0, 0.5, len(m3))
 
+    '''
     # ------ SIN --------
 
     # phi matrix for sin
@@ -115,7 +123,7 @@ def task1():
     # plot the results
     x = np.arange(0, 2*np.pi, 0.1)
     # true line
-    plotter.plot_line(col, train_sin, "True line")
+    plotter.plot_line(col, test_sin, "True line")
     plotter.plot_line(x, out_4_sin, "4 nodes")
     #plotter.plot_line(x, out_12_sin, "12 nodes")
     #plotter.plot_line(x, out_20_sin, "20 nodes")
@@ -123,9 +131,30 @@ def task1():
     plt.legend()
     plt.show()
 
+    # residual error 
+    err_4_sin = residual_err(out_4_sin, test_sin.reshape(-1,1))
+    err_12_sin = residual_err(out_12_sin, test_sin.reshape(-1, 1))
+    err_20_sin = residual_err(out_20_sin, test_sin.reshape(-1, 1))
+
+    print(f"--- Absolute residual error (sin) ---\n 4 nodes: {err_4_sin} \n 12 nodes: {err_12_sin} \n 20 nodes: {err_20_sin}\n")
+
+    '''
     
     # ------ BOX --------
+
+    # TODO: Figure out why box is either not working or perfect when changing sigma
     
+    m0 = np.array([[3.8, 0.0, SIGMA2], [0.64, 0.58, SIGMA2]])
+    phi_2_box = make_phi_matrix(m0, train_box)
+    w_2_box = batch_least_squares(phi_2_box, train_box)
+    phi_2_box_test = make_phi_matrix(m0, test_box)
+    out_2_box = np.dot(phi_2_box_test, w_2_box)
+    plotter.plot_line(x, out_2_box, "2 nodes")
+    plt.scatter(m0[:,0], m0[:, 1])
+    err_2_box = residual_err(out_2_box, test_box.reshape(-1,1))
+    print(err_2_box)
+
+
     # phi matrix for box function
     phi_4_box = make_phi_matrix(m1, train_box)
     phi_12_box = make_phi_matrix(m2, train_box)
@@ -146,7 +175,7 @@ def task1():
     out_20_box = np.dot(phi_20_box_test, w_20_box)
 
     # plot result
-    plotter.plot_line(x, out_4_box, "4 nodes")
+    #plotter.plot_line(x, out_4_box, "4 nodes")
     #plotter.plot_line(x, out_12_box, "12 nodes")
     #plotter.plot_line(x, out_20_box, "20 nodes")
     plotter.plot_line(col, train_box, "True line")
@@ -154,6 +183,12 @@ def task1():
     plt.legend()
     plt.show()
 
+    # residual error 
+    err_4_box = residual_err(out_4_box, test_box.reshape(-1,1))
+    err_12_box = residual_err(out_12_box, test_box.reshape(-1, 1))
+    err_20_box = residual_err(out_20_box, test_box.reshape(-1, 1))
+
+    print(f"--- Absolute residual error (box) ---\n 4 nodes: {err_4_box} \n 12 nodes: {err_12_box} \n 20 nodes: {err_20_box}\n")
 
 
 
@@ -177,13 +212,13 @@ def main(task):
     match task:
         case 1:
             # Task 1: Batch mode training using least squares - supervised learning of network weights
-            print("----------------\n---- Task 3.1 ----\n---------------- ")
+            print("----------------\n--- Task 3.1 ---\n---------------- ")
             task1()
         case 2:
-            print("----------------\n---- Task 3.2 ----\n---------------- ")
+            print("----------------\n--- Task 3.2 ---\n---------------- ")
             return 0
         case 3:
-            print("----------------\n---- Task 3.3 ----\n---------------- ")
+            print("----------------\n--- Task 3.3 ---\n---------------- ")
             return 0
 
     # Task 2: Regression with noise
