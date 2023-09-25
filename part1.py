@@ -7,20 +7,28 @@ SIGMA2 = 0.6 # necessary for 4 nodes but even better with higher
 EPOCH = 20
 
 
-def generate_set():
+def generate_set(noise = False):
     col = np.arange(0, 2 * np.pi, 0.1).reshape((-1, 1))
-    train_set_sin = []
-    train_set_box = []
-    test_set_sin = []
-    test_set_box = []
+    train_set_sin = np.empty((0,1))
+    train_set_box = np.empty((0,1))
+    test_set_sin = np.empty((0,1))
+    test_set_box = np.empty((0,1))
     for x in col:
-        train_set_sin.append(sin2x(x))
-        train_set_box.append(box2x(x))
+        train_set_sin = np.append(train_set_sin, sin2x(x))
+        train_set_box = np.append(train_set_box, box2x(x))
 
-        test_set_sin.append(sin2x(x + 0.05))
-        test_set_box.append(box2x(x + 0.05))
+        test_set_sin = np.append(test_set_sin, sin2x(x + 0.05))
+        test_set_box = np.append(test_set_box, box2x(x + 0.05))
+    if noise:
+        noise_list = np.random.normal(0, 0.1, (63,4))
 
-    return col, np.array(train_set_sin), np.array(train_set_box), np.array(test_set_sin), np.array(test_set_box)
+        train_set_sin += noise_list[:, 0]
+        train_set_box += noise_list[:, 1]
+
+        test_set_sin += noise_list[:, 2]
+        test_set_box += noise_list[:, 3]
+
+    return col, train_set_sin, train_set_box, test_set_sin, test_set_box
 
 
 def make_node_matrix():
@@ -68,7 +76,7 @@ def batch_least_squares(phi_mat, train):
 
     phi_f = np.dot(phi_mat.T, train).reshape(-1, 1)
     print
-    w = np.linalg.solve(phiT_phi, phi_f)
+    w, _, _, _ = np.linalg.lstsq(phiT_phi, phi_f)
     
     return w
 
@@ -80,6 +88,12 @@ def residual_err(output, targets):
     return avg_err
 
 def task1():
+    # TODO: Vary the number of rbf nodes to find which number 
+    # is necessary for varying errors.
+    # TODO: How can you simply transform the output of your RBF
+    # network to reduce the residual error to 0 for the 
+    # square(2x) problem? 
+
     col, train_sin, train_box, test_sin, test_box = generate_set()
     # matrix small, medium, large
     m1, m2, m3 = make_node_matrix()
@@ -191,6 +205,15 @@ def task1():
     print(f"--- Absolute residual error (box) ---\n 4 nodes: {err_4_box} \n 12 nodes: {err_12_box} \n 20 nodes: {err_20_box}\n")
 
 
+def task2():
+    # generate a noisy dataset, noise for both train and test
+    col, train_sin, train_box, test_sin, test_box = generate_set(noise=True)
+    x = np.arange(0, 2*np.pi, 0.1)
+
+    plotter.plot_line(x, train_sin, "True noisy line sin")
+    plotter.plot_line(x, train_box, "True noisy line box")
+    plt.legend()
+    plt.show()
 
 
 # ------------- HELPERS ---------------
@@ -216,7 +239,7 @@ def main(task):
             task1()
         case 2:
             print("----------------\n--- Task 3.2 ---\n---------------- ")
-            return 0
+            task2()
         case 3:
             print("----------------\n--- Task 3.3 ---\n---------------- ")
             return 0
@@ -228,4 +251,4 @@ def main(task):
     return None
 
 
-main(1)
+main(2)
