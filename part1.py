@@ -5,6 +5,7 @@ import plotter
 
 SIGMA2 = 0.6 # necessary for 4 nodes but even better with higher
 EPOCH = 20
+ETA = 0.1
 
 
 def generate_set(noise = False):
@@ -86,6 +87,16 @@ def residual_err(output, targets):
     avg_err = np.sum(diff)/len(output)
   
     return avg_err
+
+def sequential_delta(input_x, rbf_nodes):
+    '''
+    expected error e ~ instantaneous error ê = 
+     = 0.5 * (f(latest pattern) - f^(latest pattern))^2 = 0.5e^2 
+    '''
+    e = 0.1 # placeholder for error
+    phi_x = make_phi_matrix(rbf_nodes, input_x) # input is scalar so phi_x is 1xnodes so transpose needed
+    delta_w = ETA * e * phi_x
+    return 0
 
 def task1():
     # TODO: Vary the number of rbf nodes to find which number 
