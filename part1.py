@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import plotter
 
 SIGMA2 = 0.6 # necessary for 4 nodes but even better with higher
-EPOCH = 20
+EPOCH = 1
 ETA = 0.1
 
 
@@ -88,15 +88,25 @@ def residual_err(output, targets):
   
     return avg_err
 
-def sequential_delta(input_x, rbf_nodes):
+def sequential_delta(input_x, label, rbf_nodes, weights):
     '''
     expected error e ~ instantaneous error ê = 
      = 0.5 * (f(latest pattern) - f^(latest pattern))^2 = 0.5e^2 
     '''
-    e = 0.1 # placeholder for error
     phi_x = make_phi_matrix(rbf_nodes, input_x) # input is scalar so phi_x is 1xnodes so transpose needed
+    e = label - (phi_x * weights.T)
     delta_w = ETA * e * phi_x
-    return 0
+    # delta_w becomes 1xnodes
+    return delta_w.T
+
+
+def weight_update(x_k, y_k, nodes_lists, w_m1, w_m2, w_m3):
+    w_m1 += sequential_delta(x_k, y_k, nodes_lists[0], w_m1)
+    w_m2 += sequential_delta(x_k, y_k, nodes_lists[1], w_m2)
+    w_m3 += sequential_delta(x_k, y_k, nodes_lists[2], w_m3)
+    return w_m1, w_m2, w_m3
+
+
 
 def task1():
     # TODO: Vary the number of rbf nodes to find which number 
@@ -218,12 +228,39 @@ def task1():
 
 def task2():
     # generate a noisy dataset, noise for both train and test
-    col, train_sin, train_box, test_sin, test_box = generate_set(noise=True)
-    x = np.arange(0, 2*np.pi, 0.1)
+    input_x, train_sin, train_box, test_sin, test_box = generate_set(noise=True)
 
-    plotter.plot_line(x, train_sin, "True noisy line sin")
-    plotter.plot_line(x, train_box, "True noisy line box")
+    plotter.plot_line(input_x, train_sin, "True noisy line sin")
+    plotter.plot_line(input_x, train_box, "True noisy line box")
     plt.legend()
+    # plt.show()
+
+    nodes_lists = list(make_node_matrix())
+
+    # TODO: Make copies for BOX later
+    w_m1 = np.random.normal(0, 0.5, len(nodes_lists[0])).reshape(-1,1)
+    w_m2 = np.random.normal(0, 0.5, len(nodes_lists[1])).reshape(-1,1)
+    w_m3 = np.random.normal(0, 0.5, len(nodes_lists[2])).reshape(-1,1)
+
+    # learning loop
+    for epoch in range(EPOCH):
+        for k, x_k in enumerate(input_x):
+            d_w_m1, d_w_m2, d_w_m3 = weight_update(x_k, train_sin[k], nodes_lists, w_m1, w_m2, w_m3)
+            w_m1 += d_w_m1
+            w_m2 += d_w_m2
+            w_m3 += d_w_m3
+
+    # 63x4 * 4x1 = 63x1
+    pred_1_sin = np.dot(make_phi_matrix(nodes_lists[0], test_sin), w_m1)
+    pred_2_sin = np.dot(make_phi_matrix(nodes_lists[1], test_sin), w_m2)
+    pred_3_sin = np.dot(make_phi_matrix(nodes_lists[2], test_sin), w_m3)
+    
+    print(pred_1_sin)
+
+    plotter.plot_line(input_x, pred_1_sin)
+    plotter.plot_line(input_x, pred_2_sin)
+    plotter.plot_line(input_x, pred_3_sin)
+
     plt.show()
 
 
@@ -243,19 +280,18 @@ def phi_i(x, mu):
 
 
 def main(task):
-    match task:
-        case 1:
-            # Task 1: Batch mode training using least squares - supervised learning of network weights
-            print("----------------\n--- Task 3.1 ---\n---------------- ")
-            task1()
-        case 2:
-            print("----------------\n--- Task 3.2 ---\n---------------- ")
-            task2()
-        case 3:
-            print("----------------\n--- Task 3.3 ---\n---------------- ")
-            return 0
+    if task == 1:
+        # Task 1: Batch mode training using least squares - supervised learning of network weights
+        print("----------------\n--- Task 3.1 ---\n---------------- ")
+        task1()
+    elif task == 2:
+        # Task 2: Regression with noise
+        print("----------------\n--- Task 3.2 ---\n---------------- ")
+        task2()
+    else:
+        print("----------------\n--- Task 3.3 ---\n---------------- ")
+        return 0
 
-    # Task 2: Regression with noise
 
 
     # Task 3: Competitive learning (CL) to initialise RBF units
