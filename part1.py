@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 
 import plotter
 
-SIGMA2 = 0.7  # necessary for 4 nodes but even better with higher
+SIGMA2 = 1.8  # necessary for 4 nodes but even better with higher
 EPOCH = 1
 ETA = 0.1
 
@@ -64,12 +64,11 @@ def make_node_matrix():
     return four, twelve, twenty
 
 
-def make_phi_matrix(node_matrix, input_list):
+def make_phi_matrix(node_matrix, input_list, col):
     phi_matrix = np.zeros((len(input_list), len(node_matrix)))
-
     for i, x in enumerate(input_list):
         for j, node in enumerate(node_matrix):
-            phi_matrix[i, j] = phi_i(x, node)
+            phi_matrix[i, j] = phi_i(x, node, col[i])
 
     return phi_matrix
 
@@ -144,9 +143,9 @@ def task1():
     # ------ SIN --------
 
     # phi matrix for sin
-    phi_4_sin = make_phi_matrix(m1, train_sin)
-    phi_12_sin = make_phi_matrix(m2, train_sin)
-    phi_20_sin = make_phi_matrix(m3, train_sin)
+    phi_4_sin = make_phi_matrix(m1, train_sin, col)
+    phi_12_sin = make_phi_matrix(m2, train_sin, col)
+    phi_20_sin = make_phi_matrix(m3, train_sin, col)
 
     # weight vectors
     w_4_sin = batch_least_squares(phi_4_sin, train_sin)
@@ -154,9 +153,9 @@ def task1():
     w_20_sin = batch_least_squares(phi_20_sin, train_sin)
 
     # test on hold out set and sum to get output
-    phi_4_sin_test = make_phi_matrix(m1, test_sin)
-    phi_12_sin_test = make_phi_matrix(m2, test_sin)
-    phi_20_sin_test = make_phi_matrix(m3, test_sin)
+    phi_4_sin_test = make_phi_matrix(m1, test_sin, col+0.05)
+    phi_12_sin_test = make_phi_matrix(m2, test_sin, col+0.05)
+    phi_20_sin_test = make_phi_matrix(m3, test_sin, col+0.05)
 
     out_4_sin = np.dot(phi_4_sin_test, w_4_sin)
     out_12_sin = np.dot(phi_12_sin_test, w_12_sin)
@@ -184,25 +183,26 @@ def task1():
     print(
         f"--- Absolute residual error (sin) ---\n 4 nodes: {err_4_sin} \n 12 nodes: {err_12_sin} \n 20 nodes: {err_20_sin}\n")
 
+
     # ------ BOX --------
 
     # TODO: Figure out why box is either not working or perfect when changing sigma
 
     plt.figure("Box prediction")
-    m0 = np.array([[3.8, 0.0, SIGMA2], [0.64, 0.58, SIGMA2]])
-    phi_2_box = make_phi_matrix(m0, train_box)
-    w_2_box = batch_least_squares(phi_2_box, train_box)
-    phi_2_box_test = make_phi_matrix(m0, test_box)
-    out_2_box = np.dot(phi_2_box_test, w_2_box)
+    # m0 = np.array([[3.8, 0.0, SIGMA2], [0.64, 0.58, SIGMA2]])
+    # phi_2_box = make_phi_matrix(m0, train_box)
+    # w_2_box = batch_least_squares(phi_2_box, train_box)
+    # phi_2_box_test = make_phi_matrix(m0, test_box)
+    # out_2_box = np.dot(phi_2_box_test, w_2_box)
     # plotter.plot_line(x + 0.05, out_2_box, "2 nodes")
     # plt.scatter(m0[:, 0], m0[:, 1])
-    err_2_box = residual_err(out_2_box, test_box.reshape(-1, 1))
-    print(err_2_box)
+    # err_2_box = residual_err(out_2_box, test_box.reshape(-1, 1))
+    # print(err_2_box)
 
     # phi matrix for box function
-    phi_4_box = make_phi_matrix(m1, train_box)
-    phi_12_box = make_phi_matrix(m2, train_box)
-    phi_20_box = make_phi_matrix(m3, train_box)
+    phi_4_box = make_phi_matrix(m1, train_box, col)
+    phi_12_box = make_phi_matrix(m2, train_box, col)
+    phi_20_box = make_phi_matrix(m3, train_box, col)
 
     # calculate weights from rbf to output
     w_4_box = batch_least_squares(phi_4_box, train_box)
@@ -210,9 +210,9 @@ def task1():
     w_20_box = batch_least_squares(phi_20_box, train_box)
 
     # test on hold out
-    phi_4_box_test = make_phi_matrix(m1, test_box)
-    phi_12_box_test = make_phi_matrix(m2, test_box)
-    phi_20_box_test = make_phi_matrix(m3, test_box)
+    phi_4_box_test = make_phi_matrix(m1, test_box, col+0.05)
+    phi_12_box_test = make_phi_matrix(m2, test_box, col+0.05)
+    phi_20_box_test = make_phi_matrix(m3, test_box, col+0.05)
 
     out_4_box = np.dot(phi_4_box_test, w_4_box)
     out_12_box = np.dot(phi_12_box_test, w_12_box)
@@ -287,8 +287,9 @@ def box2x(x):
     return 1 if np.sin(2 * x) >= 0 else -1
 
 
-def phi_i(x, mu):
-    phi = np.exp((- (np.linalg.norm(x - mu[:2]) ** 2) / (2 * mu[2])))
+def phi_i(y_coor, mu, x_coor):
+    point = np.array([x_coor[0], y_coor])
+    phi = np.exp((- (np.linalg.norm(point - mu[:2]) ** 2) / (2 * mu[2])))
     return phi
 
 
