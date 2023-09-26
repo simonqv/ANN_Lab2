@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 
 import plotter
 
-SIGMA2 = 0.6 # necessary for 4 nodes but even better with higher
+SIGMA2 = 5.0 # necessary for 4 nodes but even better with higher
 EPOCH = 20
 ETA = 0.1
 
@@ -38,7 +38,9 @@ def make_node_matrix():
     :return: nodes
     """
     four = np.array([[0.76, 0.98, SIGMA2], [2.33, -0.98, SIGMA2], [3.9, 0.98, SIGMA2], [5.5, -0.98, SIGMA2]])
+    eight = np.array(([[0.76, 0.98, SIGMA2], [2.33, -0.98, SIGMA2], [3.9, 0.98, SIGMA2], [5.5, -0.98, SIGMA2], [4.640, 0.049, SIGMA2], [3.093, -0.010, SIGMA2], [1.526, -0.019, SIGMA2], [0.130, 0.290, SIGMA2]]))
     twelve = np.array([[0.12, 0.3, SIGMA2], [1.13, 0.96, SIGMA2], [1.46, 0.3, SIGMA2], [1.6, -0.3, SIGMA2], [2.0, -0.9, SIGMA2], [2.7, -0.9, SIGMA2], [3.1, 0.0, SIGMA2], [3.3, 0.6, SIGMA2], [3.9, 0.98, SIGMA2], [4.6, 0.5, SIGMA2], [4.8, -0.34, SIGMA2], [5.9, -0.9, SIGMA2]])
+    #sixteen = np.array([[0.12, 0.3, SIGMA2], [1.13, 0.96, SIGMA2], [1.46, 0.3, SIGMA2], [1.6, -0.3, SIGMA2], [2.0, -0.9, SIGMA2], [2.7, -0.9, SIGMA2], [3.1, 0.0, SIGMA2], [3.3, 0.6, SIGMA2], [3.9, 0.98, SIGMA2], [4.6, 0.5, SIGMA2], [4.8, -0.34, SIGMA2], [5.9, -0.9, SIGMA2], [0.323, 0.683, SIGMA2], [2.846, -0.406, SIGMA2], [4.963, -0.846, SIGMA2], [6.104, -0.281, SIGMA2]])
     twenty = np.array([[0.1, 0.2, SIGMA2],
                        [0.01, 0.98, SIGMA2],
                        [1.13, 0.96, SIGMA2],
@@ -56,8 +58,8 @@ def make_node_matrix():
                        [4.6, 0.5, SIGMA2],
                        [4.61, 0.97, SIGMA2],
                        [4.8, -0.34, SIGMA2], [4.79, -0.98, SIGMA2], [5.9, -0.9, SIGMA2], [6.2, -0.98, SIGMA2]])
-
-    return four, twelve, twenty
+    
+    return four, twelve, eight, twenty
 
 
 def make_phi_matrix(node_matrix, input_list):
@@ -107,7 +109,35 @@ def task1():
 
     col, train_sin, train_box, test_sin, test_box = generate_set()
     # matrix small, medium, large
-    m1, m2, m3 = make_node_matrix()
+    m1, m2, m4, m3 = make_node_matrix()
+
+    # make a graph with just all points
+    plt.figure(1)
+    plt.title("4 RBF units")
+    plotter.points(m1, m2, m3, p1=True)
+    plotter.plot_line(col, test_sin)
+    plotter.plot_line(col, test_box)
+
+    plt.figure(2)
+    plt.title("8 RBF units")
+    for x in m4:
+        plt.scatter(x[0], x[1], c="r", marker="x")
+    plotter.plot_line(col, test_sin)
+    plotter.plot_line(col, test_box)
+
+    plt.figure(3)
+    plt.title("12 RBF units")
+    plotter.points(m1, m2, m3, p2=True)
+    plotter.plot_line(col, test_sin)
+    plotter.plot_line(col, test_box)
+
+    plt.figure(4)
+    plt.title("20 RBF units")
+    plotter.points(m1, m2, m3, p3=True)
+    plotter.plot_line(col, test_sin)
+    plotter.plot_line(col, test_box)
+
+    plt.show()
 
     x = np.arange(0, 2*np.pi, 0.1)
 
@@ -123,48 +153,56 @@ def task1():
     # init_w_m2 = np.random.normal(0, 0.5, len(m2))
     # init_w_m3 = np.random.normal(0, 0.5, len(m3))
 
-    '''
+    
     # ------ SIN --------
 
     # phi matrix for sin
     phi_4_sin = make_phi_matrix(m1, train_sin)
     phi_12_sin = make_phi_matrix(m2, train_sin)
+    phi_8_sin = make_phi_matrix(m4, train_sin)
     phi_20_sin = make_phi_matrix(m3, train_sin)
 
     # weight vectors
     w_4_sin = batch_least_squares(phi_4_sin, train_sin)
     w_12_sin = batch_least_squares(phi_12_sin, train_sin)
+    w_8_sin = batch_least_squares(phi_8_sin, train_sin)
     w_20_sin = batch_least_squares(phi_20_sin, train_sin)
     
     # test on hold out set and sum to get output
     phi_4_sin_test  = make_phi_matrix(m1, test_sin)
     phi_12_sin_test  = make_phi_matrix(m2, test_sin)
+    phi_8_sin_test  = make_phi_matrix(m4, test_sin)
     phi_20_sin_test  = make_phi_matrix(m3, test_sin)
 
     out_4_sin = np.dot(phi_4_sin_test, w_4_sin)
     out_12_sin = np.dot(phi_12_sin_test, w_12_sin)
+    out_8_sin = np.dot(phi_8_sin_test, w_8_sin)
     out_20_sin = np.dot(phi_20_sin_test, w_20_sin)
-
+    
+    '''
     # plot the results
     x = np.arange(0, 2*np.pi, 0.1)
     # true line
     plotter.plot_line(col, test_sin, "True line")
-    plotter.plot_line(x, out_4_sin, "4 nodes")
+    #plotter.plot_line(x, out_4_sin, "4 nodes")
     #plotter.plot_line(x, out_12_sin, "12 nodes")
     #plotter.plot_line(x, out_20_sin, "20 nodes")
-    plotter.points(m1, m2, m3, True)
+    #plotter.points(m1, m2, m3, True)
+    plotter.points(m3, m2, m3, p2=True)
+    plotter.points(m1, m3, m4, p3=True)
     plt.legend()
     plt.show()
+    '''
 
     # residual error 
     err_4_sin = residual_err(out_4_sin, test_sin.reshape(-1,1))
     err_12_sin = residual_err(out_12_sin, test_sin.reshape(-1, 1))
+    err_18_sin = residual_err(out_8_sin, test_sin.reshape(-1, 1))
     err_20_sin = residual_err(out_20_sin, test_sin.reshape(-1, 1))
 
-    print(f"--- Absolute residual error (sin) ---\n 4 nodes: {err_4_sin} \n 12 nodes: {err_12_sin} \n 20 nodes: {err_20_sin}\n")
+    print(f"--- Absolute residual error (sin) ---\n 4 nodes: {err_4_sin} \n 8 nodes: {err_18_sin} \n 12 nodes: {err_12_sin} \n 20 nodes: {err_20_sin}\n")
 
     '''
-    
     # ------ BOX --------
 
     # TODO: Figure out why box is either not working or perfect when changing sigma
@@ -174,7 +212,7 @@ def task1():
     w_2_box = batch_least_squares(phi_2_box, train_box)
     phi_2_box_test = make_phi_matrix(m0, test_box)
     out_2_box = np.dot(phi_2_box_test, w_2_box)
-    plotter.plot_line(x, out_2_box, "2 nodes")
+    plotter.plot_line(x, out_2_box, "2 units")
     plt.scatter(m0[:,0], m0[:, 1])
     err_2_box = residual_err(out_2_box, test_box.reshape(-1,1))
     print(err_2_box)
@@ -182,39 +220,51 @@ def task1():
 
     # phi matrix for box function
     phi_4_box = make_phi_matrix(m1, train_box)
+    phi_8_box = make_phi_matrix(m4, train_box)
     phi_12_box = make_phi_matrix(m2, train_box)
     phi_20_box = make_phi_matrix(m3, train_box)
 
     # calculate weights from rbf to output
     w_4_box = batch_least_squares(phi_4_box, train_box)
+    w_8_box = batch_least_squares(phi_8_box, train_box)
     w_12_box = batch_least_squares(phi_12_box, train_box)
     w_20_box = batch_least_squares(phi_20_box, train_box)
 
     # test on hold out
     phi_4_box_test = make_phi_matrix(m1, test_box)
+    phi_8_box_test = make_phi_matrix(m4, test_box)
     phi_12_box_test = make_phi_matrix(m2, test_box)
     phi_20_box_test = make_phi_matrix(m3, test_box)
 
     out_4_box = np.dot(phi_4_box_test, w_4_box)
+    out_8_box = np.dot(phi_8_box_test, w_8_box)
     out_12_box = np.dot(phi_12_box_test, w_12_box)
     out_20_box = np.dot(phi_20_box_test, w_20_box)
 
+    print("4", out_4_box)
+    print("8", out_8_box)
+    print("12", out_12_box)
+    print("20", out_20_box)
+
+
     # plot result
-    #plotter.plot_line(x, out_4_box, "4 nodes")
-    #plotter.plot_line(x, out_12_box, "12 nodes")
-    #plotter.plot_line(x, out_20_box, "20 nodes")
-    plotter.plot_line(col, train_box, "True line")
+    plotter.plot_line(x+0.05, out_4_box, "4 units")
+    plotter.plot_line(x+0.05, out_12_box, "12 units")
+    plotter.plot_line(x+0.05, out_20_box, "20 units")
+    plotter.plot_line(col, train_box, "True units")
+
     plotter.points(m1, m2, m3, True)
     plt.legend()
     plt.show()
 
     # residual error 
     err_4_box = residual_err(out_4_box, test_box.reshape(-1,1))
+    err_8_box = residual_err(out_8_box, test_box.reshape(-1,1))
     err_12_box = residual_err(out_12_box, test_box.reshape(-1, 1))
     err_20_box = residual_err(out_20_box, test_box.reshape(-1, 1))
 
-    print(f"--- Absolute residual error (box) ---\n 4 nodes: {err_4_box} \n 12 nodes: {err_12_box} \n 20 nodes: {err_20_box}\n")
-
+    print(f"--- Absolute residual error (box) ---\n 2 nodes: {err_2_box} \n 4 nodes: {err_4_box} \n 8 nodes: {err_8_box} \n 12 nodes: {err_12_box} \n 20 nodes: {err_20_box}\n")
+    '''
 
 def task2():
     # generate a noisy dataset, noise for both train and test
@@ -262,4 +312,4 @@ def main(task):
     return None
 
 
-main(2)
+main(1)
