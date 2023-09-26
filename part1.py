@@ -92,7 +92,7 @@ def residual_err(output, targets):
 def sequential_delta(input_x, label, rbf_nodes, weights, input_x_list):
     '''
     expected error e ~ instantaneous error ê = 
-     = 0.5 * (f(latest pattern) - f^(latest pattern))^2 = 0.5e^2 
+     = 0.5 * (f(latest pattern) - f^(latest pattern))^2 = 0.5error^2 
     '''
     phi_x = make_phi_matrix(rbf_nodes, input_x, input_x_list)  # input is scalar so phi_x is 1xnodes so transpose needed
     e = label - (phi_x * weights.T)
@@ -291,12 +291,13 @@ def task2():
     pred_3_sin = np.dot(make_phi_matrix(nodes_lists[2], test_sin, input_x+0.05), w_m3)
 
     print(pred_1_sin)
-
+    '''
     plotter.plot_line(input_x, pred_1_sin, "4 nodes")
     plotter.plot_line(input_x, pred_2_sin, "12 nodes")
     plotter.plot_line(input_x, pred_3_sin, "8 nodes")
     plt.legend()
     plt.show()
+    ''' 
 
 
 # ------------- HELPERS ---------------
