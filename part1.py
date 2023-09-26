@@ -78,7 +78,7 @@ def batch_least_squares(phi_mat, train):
     phiT_phi = np.dot(phi_mat.T, phi_mat)
 
     phi_f = np.dot(phi_mat.T, train).reshape(-1, 1)
-    print
+
     w, _, _, _ = np.linalg.lstsq(phiT_phi, phi_f)
 
     return w
@@ -153,9 +153,9 @@ def task1():
     w_20_sin = batch_least_squares(phi_20_sin, train_sin)
 
     # test on hold out set and sum to get output
-    phi_4_sin_test = make_phi_matrix(m1, test_sin, col+0.05)
-    phi_12_sin_test = make_phi_matrix(m2, test_sin, col+0.05)
-    phi_20_sin_test = make_phi_matrix(m3, test_sin, col+0.05)
+    phi_4_sin_test = make_phi_matrix(m1, test_sin, col + 0.05)
+    phi_12_sin_test = make_phi_matrix(m2, test_sin, col + 0.05)
+    phi_20_sin_test = make_phi_matrix(m3, test_sin, col + 0.05)
 
     out_4_sin = np.dot(phi_4_sin_test, w_4_sin)
     out_12_sin = np.dot(phi_12_sin_test, w_12_sin)
@@ -183,21 +183,9 @@ def task1():
     print(
         f"--- Absolute residual error (sin) ---\n 4 nodes: {err_4_sin} \n 12 nodes: {err_12_sin} \n 20 nodes: {err_20_sin}\n")
 
-
     # ------ BOX --------
 
-    # TODO: Figure out why box is either not working or perfect when changing sigma
-
     plt.figure("Box prediction")
-    # m0 = np.array([[3.8, 0.0, SIGMA2], [0.64, 0.58, SIGMA2]])
-    # phi_2_box = make_phi_matrix(m0, train_box)
-    # w_2_box = batch_least_squares(phi_2_box, train_box)
-    # phi_2_box_test = make_phi_matrix(m0, test_box)
-    # out_2_box = np.dot(phi_2_box_test, w_2_box)
-    # plotter.plot_line(x + 0.05, out_2_box, "2 nodes")
-    # plt.scatter(m0[:, 0], m0[:, 1])
-    # err_2_box = residual_err(out_2_box, test_box.reshape(-1, 1))
-    # print(err_2_box)
 
     # phi matrix for box function
     phi_4_box = make_phi_matrix(m1, train_box, col)
@@ -210,9 +198,9 @@ def task1():
     w_20_box = batch_least_squares(phi_20_box, train_box)
 
     # test on hold out
-    phi_4_box_test = make_phi_matrix(m1, test_box, col+0.05)
-    phi_12_box_test = make_phi_matrix(m2, test_box, col+0.05)
-    phi_20_box_test = make_phi_matrix(m3, test_box, col+0.05)
+    phi_4_box_test = make_phi_matrix(m1, test_box, col + 0.05)
+    phi_12_box_test = make_phi_matrix(m2, test_box, col + 0.05)
+    phi_20_box_test = make_phi_matrix(m3, test_box, col + 0.05)
 
     out_4_box = np.dot(phi_4_box_test, w_4_box)
     out_12_box = np.dot(phi_12_box_test, w_12_box)
