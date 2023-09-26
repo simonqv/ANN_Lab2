@@ -195,7 +195,7 @@ def task1():
     phi_2_box_test = make_phi_matrix(m0, test_box)
     out_2_box = np.dot(phi_2_box_test, w_2_box)
     # plotter.plot_line(x + 0.05, out_2_box, "2 nodes")
-    plt.scatter(m0[:, 0], m0[:, 1])
+    # plt.scatter(m0[:, 0], m0[:, 1])
     err_2_box = residual_err(out_2_box, test_box.reshape(-1, 1))
     print(err_2_box)
 
