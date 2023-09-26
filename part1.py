@@ -178,21 +178,6 @@ def task1():
     out_12_sin = np.dot(phi_12_sin_test, w_12_sin)
     out_8_sin = np.dot(phi_8_sin_test, w_8_sin)
     out_20_sin = np.dot(phi_20_sin_test, w_20_sin)
-    
-    '''
-    # plot the results
-    x = np.arange(0, 2*np.pi, 0.1)
-    # true line
-    plotter.plot_line(col, test_sin, "True line")
-    #plotter.plot_line(x, out_4_sin, "4 nodes")
-    #plotter.plot_line(x, out_12_sin, "12 nodes")
-    #plotter.plot_line(x, out_20_sin, "20 nodes")
-    #plotter.points(m1, m2, m3, True)
-    plotter.points(m3, m2, m3, p2=True)
-    plotter.points(m1, m3, m4, p3=True)
-    plt.legend()
-    plt.show()
-    '''
 
     # residual error 
     err_4_sin = residual_err(out_4_sin, test_sin.reshape(-1,1))
@@ -240,11 +225,6 @@ def task1():
     out_8_box = np.dot(phi_8_box_test, w_8_box)
     out_12_box = np.dot(phi_12_box_test, w_12_box)
     out_20_box = np.dot(phi_20_box_test, w_20_box)
-
-    print("4", out_4_box)
-    print("8", out_8_box)
-    print("12", out_12_box)
-    print("20", out_20_box)
 
 
     # plot result
