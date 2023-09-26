@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import plotter
 
-SIGMA2 = 1.5  # necessary for 4 nodes but even better with higher
+SIGMA2 = 0.5  # necessary for 4 nodes but even better with higher
 EPOCH = 1
 ETA = 0.1
 
@@ -102,9 +102,9 @@ def sequential_delta(input_x, label, rbf_nodes, weights, input_x_list):
 
 
 def weight_update(x_k, y_k, nodes_lists, w_m1, w_m2, w_m3, input_x):
-    w_m1 += sequential_delta(x_k, y_k, nodes_lists[0], w_m1, input_x)
-    w_m2 += sequential_delta(x_k, y_k, nodes_lists[1], w_m2, input_x)
-    w_m3 += sequential_delta(x_k, y_k, nodes_lists[2], w_m3, input_x)
+    w_m1 = sequential_delta(x_k, y_k, nodes_lists[0], w_m1, input_x)
+    w_m2 = sequential_delta(x_k, y_k, nodes_lists[1], w_m2, input_x)
+    w_m3 = sequential_delta(x_k, y_k, nodes_lists[2], w_m3, input_x)
     return w_m1, w_m2, w_m3
 
 
@@ -265,17 +265,27 @@ def task2():
     # generate a noisy dataset, noise for both train and test
     input_x, train_sin, train_box, test_sin, test_box = generate_set(noise=True)
 
-    plotter.plot_line(input_x, train_sin, "True noisy line sin")
-    plotter.plot_line(input_x, train_box, "True noisy line box")
+    #shuffle input points
+    input_x, train_sin, index_list = shuffle_data(input_x, train_sin)
+    
+    #reorder them back again
+    ordered_y = reverse_shuffle(input_x, train_sin, index_list)
+   
+
+    x = np.arange(0, 2 * np.pi, 0.1)
+    plotter.plot_line(x, ordered_y, "True noisy line sin")
+    #plotter.plot_line(input_x, train_box, "True noisy line box")
     plt.legend()
-    # plt.show()
+    #plt.show()
 
     nodes_lists = list(make_node_matrix())
 
+    plotter.points(nodes_lists[0], nodes_lists[2], nodes_lists[1], True, False, True)
+
     # TODO: Make copies for BOX later
-    w_m1 = np.random.normal(0, 0.5, len(nodes_lists[0])).reshape(-1, 1)
-    w_m2 = np.random.normal(0, 0.5, len(nodes_lists[1])).reshape(-1, 1)
-    w_m3 = np.random.normal(0, 0.5, len(nodes_lists[2])).reshape(-1, 1)
+    w_m1 = np.random.normal(0, 0.2, len(nodes_lists[0])).reshape(-1, 1)
+    w_m2 = np.random.normal(0, 0.2, len(nodes_lists[1])).reshape(-1, 1)
+    w_m3 = np.random.normal(0, 0.2, len(nodes_lists[2])).reshape(-1, 1)
 
     # learning loop
     for epoch in range(EPOCH):
@@ -290,14 +300,18 @@ def task2():
     pred_2_sin = np.dot(make_phi_matrix(nodes_lists[1], test_sin, input_x+0.05), w_m2)
     pred_3_sin = np.dot(make_phi_matrix(nodes_lists[2], test_sin, input_x+0.05), w_m3)
 
-    print(pred_1_sin)
+    #shuffle predictions to original order
+    pred_1_sin = reverse_shuffle(input_x, pred_1_sin, index_list)
+    pred_2_sin = reverse_shuffle(input_x, pred_2_sin, index_list)
+
+    plotter.plot_line(x, pred_1_sin, "4 nodes")
+    plotter.plot_line(x, pred_2_sin, "12 nodes")
     '''
-    plotter.plot_line(input_x, pred_1_sin, "4 nodes")
-    plotter.plot_line(input_x, pred_2_sin, "12 nodes")
     plotter.plot_line(input_x, pred_3_sin, "8 nodes")
+    '''
     plt.legend()
     plt.show()
-    ''' 
+   
 
 
 # ------------- HELPERS ---------------
@@ -314,6 +328,21 @@ def phi_i(y_coor, mu, x_coor):
     point = np.array([x_coor[0], y_coor])
     phi = np.exp((- (np.linalg.norm(point - mu[:2]) ** 2) / (2 * mu[2])))
     return phi
+
+def shuffle_data(input_x_vec, targets):
+    indices = np.arange(len(targets))
+    p = np.random.permutation(len(targets))
+    x = input_x_vec[p]
+    y = targets[p]
+    indices = indices[p]
+    return x, y, indices
+
+def reverse_shuffle(input_x, y, index_list):
+    ordered_y = [0 for _ in range(len(input_x))]
+    for i in range(len(input_x)):
+        index = index_list[i]
+        ordered_y[index] = y[i]
+    return ordered_y
 
 
 def main(task):
