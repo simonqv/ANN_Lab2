@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import plotter
 
 SIGMA2 = 0.5  # necessary for 4 nodes but even better with higher
-EPOCH = 1
+EPOCH = 200
 ETA = 0.1
 
 
@@ -95,7 +95,7 @@ def sequential_delta(input_x, label, rbf_nodes, weights, input_x_list):
      = 0.5 * (f(latest pattern) - f^(latest pattern))^2 = 0.5error^2 
     '''
     phi_x = make_phi_matrix(rbf_nodes, input_x, input_x_list)  # input is scalar so phi_x is 1xnodes so transpose needed
-    e = label - (phi_x * weights.T)
+    e = label - np.dot(phi_x, weights)
     delta_w = ETA * e * phi_x
     # delta_w becomes 1xnodes
     return delta_w.T
@@ -106,6 +106,40 @@ def weight_update(x_k, y_k, nodes_lists, w_m1, w_m2, w_m3, input_x):
     w_m2 = sequential_delta(x_k, y_k, nodes_lists[1], w_m2, input_x)
     w_m3 = sequential_delta(x_k, y_k, nodes_lists[2], w_m3, input_x)
     return w_m1, w_m2, w_m3
+
+
+def test_8_nodes():
+    #np.random.seed(1)
+    input_x, train_sin, _, test_sin, _ = generate_set(True)
+    #x, train_sin_true, _, test_sin, _ = generate_set(True)
+
+    #shuffle input points
+    #input_x, train_sin, index_list = shuffle_data(x, train_sin_true)
+    
+    _, _, nodes, _ = make_node_matrix()
+    # init weights
+    weights = np.random.normal(0, 0.2, len(nodes)).reshape(-1, 1)
+
+    # learning loop
+    for epoch in range(EPOCH):
+        for k, x_k in enumerate(input_x):
+            delta_w = sequential_delta(x_k, train_sin[k], nodes, weights, input_x)
+            weights += delta_w
+        #input_x, train_sin, index_list = shuffle_data(input_x, train_sin)
+
+
+    # 63x4 * 4x1 = 63x1
+    preds = make_phi_matrix(nodes, test_sin, input_x+0.05)
+    preds = np.dot(preds, weights)
+    
+    #preds = reverse_shuffle(preds, index_list)
+   
+    #plotter.plot_line(x, preds)
+    #plotter.plot_line(x, train_sin_true)
+    plotter.plot_line(input_x, preds)
+    plotter.plot_line(input_x, train_sin)
+    plt.show()
+        
 
 
 def task1():
@@ -331,17 +365,20 @@ def phi_i(y_coor, mu, x_coor):
 
 def shuffle_data(input_x_vec, targets):
     indices = np.arange(len(targets))
+
     p = np.random.permutation(len(targets))
     x = input_x_vec[p]
     y = targets[p]
     indices = indices[p]
     return x, y, indices
 
-def reverse_shuffle(input_x, y, index_list):
-    ordered_y = [0 for _ in range(len(input_x))]
-    for i in range(len(input_x)):
+def reverse_shuffle(y, index_list):
+    ordered_y = np.zeros(len(y))
+    test = np.zeros(len(y))
+    for i in range(len(y)):
         index = index_list[i]
-        ordered_y[index] = y[i]
+        np.put(test, index, index)
+        np.put(ordered_y, index, y[i])
     return ordered_y
 
 
@@ -361,5 +398,5 @@ def main(task):
     # Task 3: Competitive learning (CL) to initialise RBF units
     return None
 
-
-main(2)
+test_8_nodes()
+#main(2)
