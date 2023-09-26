@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import plotter
 
-SIGMA2 = 1.8  # necessary for 4 nodes but even better with higher
+SIGMA2 = 1.5  # necessary for 4 nodes but even better with higher
 EPOCH = 1
 ETA = 0.1
 
@@ -89,28 +89,27 @@ def residual_err(output, targets):
     return avg_err
 
 
-def sequential_delta(input_x, label, rbf_nodes, weights):
+def sequential_delta(input_x, label, rbf_nodes, weights, input_x_list):
     '''
     expected error e ~ instantaneous error ê = 
      = 0.5 * (f(latest pattern) - f^(latest pattern))^2 = 0.5e^2 
     '''
-    phi_x = make_phi_matrix(rbf_nodes, input_x)  # input is scalar so phi_x is 1xnodes so transpose needed
+    phi_x = make_phi_matrix(rbf_nodes, input_x, input_x_list)  # input is scalar so phi_x is 1xnodes so transpose needed
     e = label - (phi_x * weights.T)
     delta_w = ETA * e * phi_x
     # delta_w becomes 1xnodes
     return delta_w.T
 
 
-def weight_update(x_k, y_k, nodes_lists, w_m1, w_m2, w_m3):
-    w_m1 += sequential_delta(x_k, y_k, nodes_lists[0], w_m1)
-    w_m2 += sequential_delta(x_k, y_k, nodes_lists[1], w_m2)
-    w_m3 += sequential_delta(x_k, y_k, nodes_lists[2], w_m3)
+def weight_update(x_k, y_k, nodes_lists, w_m1, w_m2, w_m3, input_x):
+    w_m1 += sequential_delta(x_k, y_k, nodes_lists[0], w_m1, input_x)
+    w_m2 += sequential_delta(x_k, y_k, nodes_lists[1], w_m2, input_x)
+    w_m3 += sequential_delta(x_k, y_k, nodes_lists[2], w_m3, input_x)
     return w_m1, w_m2, w_m3
 
 
 def task1():
-    # TODO: Vary the number of rbf nodes to find which number 
-    # is necessary for varying errors.
+   
     # TODO: How can you simply transform the output of your RBF
     # network to reduce the residual error to 0 for the 
     # square(2x) problem? 
@@ -281,22 +280,22 @@ def task2():
     # learning loop
     for epoch in range(EPOCH):
         for k, x_k in enumerate(input_x):
-            d_w_m1, d_w_m2, d_w_m3 = weight_update(x_k, train_sin[k], nodes_lists, w_m1, w_m2, w_m3)
+            d_w_m1, d_w_m2, d_w_m3 = weight_update(x_k, train_sin[k], nodes_lists, w_m1, w_m2, w_m3, input_x)
             w_m1 += d_w_m1
             w_m2 += d_w_m2
             w_m3 += d_w_m3
 
     # 63x4 * 4x1 = 63x1
-    pred_1_sin = np.dot(make_phi_matrix(nodes_lists[0], test_sin), w_m1)
-    pred_2_sin = np.dot(make_phi_matrix(nodes_lists[1], test_sin), w_m2)
-    pred_3_sin = np.dot(make_phi_matrix(nodes_lists[2], test_sin), w_m3)
+    pred_1_sin = np.dot(make_phi_matrix(nodes_lists[0], test_sin, input_x+0.05), w_m1)
+    pred_2_sin = np.dot(make_phi_matrix(nodes_lists[1], test_sin, input_x+0.05), w_m2)
+    pred_3_sin = np.dot(make_phi_matrix(nodes_lists[2], test_sin, input_x+0.05), w_m3)
 
     print(pred_1_sin)
 
-    plotter.plot_line(input_x, pred_1_sin)
-    plotter.plot_line(input_x, pred_2_sin)
-    plotter.plot_line(input_x, pred_3_sin)
-
+    plotter.plot_line(input_x, pred_1_sin, "4 nodes")
+    plotter.plot_line(input_x, pred_2_sin, "12 nodes")
+    plotter.plot_line(input_x, pred_3_sin, "8 nodes")
+    plt.legend()
     plt.show()
 
 
@@ -333,4 +332,4 @@ def main(task):
     return None
 
 
-main(1)
+main(2)
