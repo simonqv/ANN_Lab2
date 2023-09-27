@@ -4,7 +4,7 @@ import plotter
 import sys
 
 SIGMA2 = 0.2  # necessary for 4 nodes but even better with higher
-EPOCH = 10
+EPOCH = 100
 ETA = 0.1
 
 
@@ -130,38 +130,84 @@ def weight_update(x_k, y_k, nodes_lists, w_m1, w_m2, w_m3, input_x):
     return w_m1, w_m2, w_m3
 
 
-def comp_learn(nodes, x, y):
+def comp_learn(nodes_in, x, y):
     '''
     Competitive Learning
     x is list of x values 0-2pi 
     y is corresponding target values for training set
     '''
-    dead_nodes = nodes.copy()
-    eta = 0.1
+    dead_nodes = nodes_in.copy()
+    nodes = nodes_in.copy()
+    eta = 0.15
     learning_range = 100
     for i in range(learning_range):
         input_vec_i = np.random.randint(0, 63)
         point_x = x[input_vec_i][0]
         point_y = y[input_vec_i]
         dists = [0 for _ in range(len(nodes))]
+        dead_dists = [0 for _ in range(len(nodes))]
         for index, node in enumerate(nodes):
             
             # calculate euclidean distance 
+            dead_dist = np.linalg.norm([point_x, point_y] - dead_nodes[index][:2])
+            dead_dists[index] = dead_dist
+            
             dist = np.linalg.norm([point_x, point_y] - node[:2])
             dists[index] = dist
+            
+        dead_i = np.argmin(dead_dists)
+        dead_winner = dead_nodes[dead_i]
+
         winners_i = np.argpartition(dists, 3)[:3]
-        print(winners_i)
-        win_i = np.argmin(dists)
-        winner = nodes[win_i]
-        winner_sample_dist = np.array([point_x - winner[0], point_y - winner[1], 0])
-        delta_w = eta * winner_sample_dist
+        winner = nodes[winners_i[0]]
+        second = nodes[winners_i[1]]
+        third = nodes[winners_i[2]]
+
+        dead_winner_diff = np.array([point_x - dead_winner[0], point_y - dead_winner[1], 0])
+        winner_diff = np.array([point_x - winner[0], point_y - winner[1], 0])
+        second_diff = np.array([point_x - second[0], point_y - second[1], 0])
+        third_diff = np.array([point_x - third[0], point_y - third[1], 0])
         
-        # update positions (w)
-        dead_nodes[win_i] += delta_w
-        plt.scatter(winner[0], winner[1], s=15, c="#FC8EAC")
-    return dead_nodes
+        # update positions (w) (right side is delta w)
+        dead_nodes[dead_i] += (eta * dead_winner_diff)
+        
+        # update sharing winners
+        nodes[winners_i[0]] += (eta * winner_diff)
+        nodes[winners_i[1]] += (0.6 * eta * second_diff)
+        nodes[winners_i[2]] += (0.4 * eta * third_diff)
+
+        plt.scatter(dead_winner[0], dead_winner[1], s=15, c="#FC8EAC")
+        plt.scatter(winner[0], winner[1], s=15, c="#B47EDE")
+        plt.scatter(second[0], second[1], s=15, c="#B47EDE")
+        plt.scatter(third[0], third[1], s=15, c="#B47EDE")
+        
+    return dead_nodes, nodes
 
 
+def learn_general(x_axis, train_set, test_set, nodes, weights, learner="batch"):
+     
+    if learner == "seq": # Do sequential learning with delta rule
+        
+        for epoch in range(EPOCH):
+            for k, x_k in enumerate(x_axis):
+                delta_w = sequential_delta(x_k, train_set[k], nodes, weights, x_axis)
+                weights += delta_w
+            # convergence
+            preds = make_phi_matrix(nodes, test_set, x_axis+0.05)
+            preds = np.dot(preds, weights)  
+            err = residual_err(preds, test_set)   
+            plt.scatter(epoch, err)  
+        plt.show()     
+
+    else: # do batch learning - only one epoch
+        phi_mat = make_phi_matrix(nodes, train_set, x_axis)
+        weights = batch_least_squares(phi_mat, train_set)
+        
+    preds = make_phi_matrix(nodes, test_set, x_axis+0.05)
+    preds = np.dot(preds, weights)
+
+    return preds
+    
 
 def test_8_nodes():
     #np.random.seed(1)
@@ -411,33 +457,98 @@ def task3():
     '''
     TODO: 
     - ONLY SIN(2x)!
-    - make matrix with 12 nodes
-    - CL to place RBF nodes according to training data
-    - Plot nodes' start pos and final pos
-    - Train RBF network like before
-    - Compare noisy and no noise
+    - > make matrix with 12 nodes
+    - > CL to place RBF nodes according to training data
+    - > Plot nodes' start pos and final pos
+    - > Train RBF network like before
+    - > Compare noisy and no noise
     - Check convergence 
     - Check generalisation performance (residual error on test)
 
-    - Avoid death
+    - > Avoid death
     '''
     # generate start nodes and data sets
     init_nodes = generate_rand_rbfs()
-    plotter.points(None, None, init_nodes, False, False, True)
     x_axis, train_set, _, test_set, _ = generate_set()
     _, train_noisy, _, _, _ = generate_set(True)
 
+    # No noise
     # move rbf nodes with CL
-    nodes = comp_learn(init_nodes.copy(), x_axis, train_set)
-    # plotter.points(nodes, init_nodes, _, True, True)
-    plt.scatter(init_nodes[:,0], init_nodes[:,1], marker="x", label="Initial placement", c="purple")
-    plt.scatter(nodes[:,0], nodes[:,1], marker="o",label="Final placement", color="b")
-    plotter.plot_line(x_axis, train_set, "sin(2x)")
-    plt.title("Movement of RBF nodes")
-    plt.xlabel("x")
-    plt.ylabel("y")
+    dead_nodes, nodes = comp_learn(init_nodes.copy(), x_axis, train_set)
+    plotter.dead_vs_share(init_nodes, dead_nodes, nodes, train_set)
+
+
+    # With noise
+    # move rbf nodes with CL
+    plt.figure(99) # movements, we don't want to plot
+    dead_nodes_noise, nodes_noise = comp_learn(init_nodes.copy(), x_axis, train_set)
+
+    plotter.noise(init_nodes, dead_nodes, dead_nodes_noise, train_set, train_noisy)
+
+
+
+    # ------- train network with the placed DEAD nodes   ---------- #
+
+    init_weights = np.random.normal(0, 0.2, len(nodes)).reshape(-1, 1)
+
+    #   SEQUENTIAL 
+
+    # train on normal data and normal nodes 
+    preds_seq = learn_general(x_axis, train_set, test_set, dead_nodes, init_weights, "seq")
+
+    # train on noisy data and noisy nodes
+    preds_seq_noise = learn_general(x_axis, train_noisy, test_set, dead_nodes_noise, init_weights, "seq")
+
+
+    #   BATCH
+    # train on normal data and normal nodes 
+    preds_batch = learn_general(x_axis, train_set, test_set, dead_nodes, init_weights)
+
+    # train on noisy data and noisy nodes
+    preds_batch_noise = learn_general(x_axis, train_noisy, test_set, dead_nodes_noise, init_weights)
+
+    # plot both comparisons 
+
+    plotter.plot_line(x_axis, train_set, "True smooth line", "dotted")
+    plotter.plot_line(x_axis, train_noisy, "True noisy line", "dotted")
+
+    plotter.plot_line(x_axis, preds_seq, "SEQ Train on normal data and nodes")
+    plotter.plot_line(x_axis, preds_seq_noise, "SEQ Train on noisy data and noisy nodes")
+    #plt.title("Sequential learning on normal and noisy data")
+    plt.title("Sequential vs Batch on normal and noisy data/nodes")
+    plt.scatter(dead_nodes[:, 0], dead_nodes[:,1], label="No noise RBF nodes")
+    plt.scatter(dead_nodes_noise[:, 0], dead_nodes_noise[:,1], label="Noise RBF nodes")
+    #plt.legend()
+    #plt.show()
+    
+    plotter.plot_line(x_axis, preds_batch, "BATCH Train on normal data and nodes")
+    plotter.plot_line(x_axis, preds_batch_noise, "BATCH Train on noisy data and noisy nodes")
+    #plotter.plot_line(x_axis, train_set, "True smooth line", "dotted")
+    #plotter.plot_line(x_axis, train_noisy, "True noisy line", "dotted")
+    #plt.title("Batch learning on normal and noisy data")
+    #plt.scatter(dead_nodes[:, 0], dead_nodes[:,1], label="No noise")
+    #plt.scatter(dead_nodes_noise[:, 0], dead_nodes_noise[:,1], label="Noise")
     plt.legend()
     plt.show()
+
+
+
+
+    # ----- COMPARE ONE OF THE EXAMPLES WITH DEAD NODES STRATEGY -----
+
+    # compare sequential noisy
+    preds_share = learn_general(x_axis, train_noisy, test_set, nodes_noise, init_weights, "seq")
+    plotter.plot_line(x_axis, train_noisy, "True noisy line", "dotted")
+    plotter.plot_line(x_axis, preds_seq_noise, "No dead nodes strategy")
+    plotter.plot_line(x_axis, preds_share, "Share win dead nodes strategy")
+    plt.title("One winner vs multiple on sequential noisy")
+    plt.scatter(nodes_noise[:, 0], nodes_noise[:,1], label="Share win RBF nodes")
+    plt.scatter(dead_nodes_noise[:, 0], dead_nodes_noise[:,1], label="No startegy RBF nodes")
+    plt.legend()
+    plt.show()
+
+
+    
 
 
 # ------------- HELPERS ---------------
