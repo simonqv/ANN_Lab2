@@ -31,7 +31,7 @@ def points(m1, m2, m3, p1=False, p2=False, p3=False):
             p2x.append(point[0])
             p2y.append(point[1])
             # plt.scatter(point[0], point[1], marker="x", c="g")
-        plt.scatter(p2x, p2y, marker="s", c="c", label="12 Units")
+        plt.scatter(p2x, p2y, marker="x", c="c", label="12 Units")
     if p3:
         p3x = []
         p3y = []

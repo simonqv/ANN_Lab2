@@ -1,10 +1,11 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import plotter
+import sys
 
-SIGMA2 = 0.5  # necessary for 4 nodes but even better with higher
+SIGMA2 = 0.2  # necessary for 4 nodes but even better with higher
 EPOCH = 10
-ETA = 0.05
+ETA = 0.1
 
 
 def generate_set(noise=False):
@@ -31,6 +32,16 @@ def generate_set(noise=False):
 
     return col, train_set_sin, train_set_box, test_set_sin, test_set_box
 
+def generate_rand_rbfs():
+    # generate 12 random nodes
+    # x values
+    x = np.random.uniform(low=0, high=2*np.pi, size=(12,1))
+    #y values between 1- and 1
+    y = np.random.uniform(-1, 1, (12, 1))
+    sigmas = np.full(12, SIGMA2).reshape(-1, 1)
+
+    nodes = np.hstack((x, y, sigmas))
+    return nodes
 
 def make_node_matrix():
     """
@@ -119,8 +130,38 @@ def weight_update(x_k, y_k, nodes_lists, w_m1, w_m2, w_m3, input_x):
     return w_m1, w_m2, w_m3
 
 
+def comp_learn(nodes, x, y):
+    '''
+    x is list of x values 0-2pi 
+    y is corresponding target values for training set
+    '''
+    eta = 0.01
+    learning_range = 1000
+    for i in range(learning_range):
+        input_vec_i = np.random.randint(0, 63)
+        point_x = x[input_vec_i][0]
+        point_y = y[input_vec_i]
+        dists = [x for _ in range(len(nodes))]
+        for index, node in enumerate(nodes):
+            # calculate euclidean distance 
+            dist = np.linalg.norm([point_x, point_y] - node[:2])
+            dists[index] = dist
+        win_i = np.argmax(dists)
+        winner = nodes[win_i]
+        winner_sample_dist = np.array([point_x - winner[0], point_y - winner[1], 0])
+        delta_w = eta * winner_sample_dist
+        # update positions (w)
+        nodes[win_i] += delta_w
+        plt.scatter(nodes[:,0], nodes[:,1])
+      
+    return nodes
+
+
+
+
+
 def test_8_nodes():
-    np.random.seed(1)
+    #np.random.seed(1)
     input_x, train_sin, train_box, test_sin, test_box = generate_set(True)
     #x, train_sin_true, _, test_sin, _ = generate_set(True)
 
@@ -363,6 +404,32 @@ def task2():
     plt.show()
    
 
+def task3():
+    '''
+    TODO: 
+    - ONLY SIN(2x)!
+    - make matrix with 12 nodes
+    - CL to place RBF nodes according to training data
+    - Plot nodes' start pos and final pos
+    - Train RBF network like before
+    - Compare noisy and no noise
+    - Check convergence 
+    - Check generalisation performance (residual error on test)
+
+    - Avoid death
+    '''
+    # generate start nodes and data sets
+    init_nodes = generate_rand_rbfs()
+    plotter.points(None, None, init_nodes, False, False, True)
+    x_axis, train_set, _, test_set, _ = generate_set()
+    _, train_noisy, _, _, _ = generate_set(True)
+
+    # move rbf nodes with CL
+    nodes = comp_learn(init_nodes.copy(), x_axis, train_set)
+    plotter.points(nodes, init_nodes, _, True, True)
+    plotter.plot_line(x_axis, train_set)
+    plt.show()
+
 
 # ------------- HELPERS ---------------
 
@@ -399,7 +466,8 @@ def reverse_shuffle(y, index_list):
     return ordered_y
 
 
-def main(task):
+def main():
+    task = int(sys.argv[1:][0])
     if task == 1:
         # Task 1: Batch mode training using least squares - supervised learning of network weights
         print("----------------\n--- Task 3.1 ---\n---------------- ")
@@ -410,10 +478,11 @@ def main(task):
         task2()
     else:
         print("----------------\n--- Task 3.3 ---\n---------------- ")
-        return 0
+        task3()
 
     # Task 3: Competitive learning (CL) to initialise RBF units
     return None
 
 #test_8_nodes()
-main(2)
+if __name__=="__main__":
+    main()
