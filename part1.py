@@ -132,9 +132,11 @@ def weight_update(x_k, y_k, nodes_lists, w_m1, w_m2, w_m3, input_x):
 
 def comp_learn(nodes, x, y):
     '''
+    Competitive Learning
     x is list of x values 0-2pi 
     y is corresponding target values for training set
     '''
+    dead_nodes = nodes.copy()
     eta = 0.1
     learning_range = 100
     for i in range(learning_range):
@@ -147,19 +149,17 @@ def comp_learn(nodes, x, y):
             # calculate euclidean distance 
             dist = np.linalg.norm([point_x, point_y] - node[:2])
             dists[index] = dist
+        winners_i = np.argpartition(dists, 3)[:3]
+        print(winners_i)
         win_i = np.argmin(dists)
         winner = nodes[win_i]
         winner_sample_dist = np.array([point_x - winner[0], point_y - winner[1], 0])
         delta_w = eta * winner_sample_dist
         
         # update positions (w)
-        nodes[win_i] += delta_w
-        # plt.scatter(winner[0], winner[1], c="b", alpha=0.1)
+        dead_nodes[win_i] += delta_w
         plt.scatter(winner[0], winner[1], s=15, c="#FC8EAC")
-    # print(nodes)
-    return nodes
-
-
+    return dead_nodes
 
 
 
