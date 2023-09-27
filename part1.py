@@ -135,25 +135,28 @@ def comp_learn(nodes, x, y):
     x is list of x values 0-2pi 
     y is corresponding target values for training set
     '''
-    eta = 0.01
-    learning_range = 1000
+    eta = 0.1
+    learning_range = 100
     for i in range(learning_range):
         input_vec_i = np.random.randint(0, 63)
         point_x = x[input_vec_i][0]
         point_y = y[input_vec_i]
-        dists = [x for _ in range(len(nodes))]
+        dists = [0 for _ in range(len(nodes))]
         for index, node in enumerate(nodes):
+            
             # calculate euclidean distance 
             dist = np.linalg.norm([point_x, point_y] - node[:2])
             dists[index] = dist
-        win_i = np.argmax(dists)
+        win_i = np.argmin(dists)
         winner = nodes[win_i]
         winner_sample_dist = np.array([point_x - winner[0], point_y - winner[1], 0])
         delta_w = eta * winner_sample_dist
+        
         # update positions (w)
         nodes[win_i] += delta_w
-        plt.scatter(nodes[:,0], nodes[:,1])
-      
+        # plt.scatter(winner[0], winner[1], c="b", alpha=0.1)
+        plt.scatter(winner[0], winner[1], s=15, c="#FC8EAC")
+    # print(nodes)
     return nodes
 
 
@@ -426,8 +429,14 @@ def task3():
 
     # move rbf nodes with CL
     nodes = comp_learn(init_nodes.copy(), x_axis, train_set)
-    plotter.points(nodes, init_nodes, _, True, True)
-    plotter.plot_line(x_axis, train_set)
+    # plotter.points(nodes, init_nodes, _, True, True)
+    plt.scatter(init_nodes[:,0], init_nodes[:,1], marker="x", label="Initial placement", c="purple")
+    plt.scatter(nodes[:,0], nodes[:,1], marker="o",label="Final placement", color="b")
+    plotter.plot_line(x_axis, train_set, "sin(2x)")
+    plt.title("Movement of RBF nodes")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.legend()
     plt.show()
 
 
