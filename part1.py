@@ -3,8 +3,8 @@ from matplotlib import pyplot as plt
 import plotter
 
 SIGMA2 = 0.5  # necessary for 4 nodes but even better with higher
-EPOCH = 200
-ETA = 0.1
+EPOCH = 10
+ETA = 0.05
 
 
 def generate_set(noise=False):
@@ -61,11 +61,22 @@ def make_node_matrix():
     return four, twelve, eight, twenty
 
 
-def make_phi_matrix(node_matrix, input_list, col):
-    phi_matrix = np.zeros((len(input_list), len(node_matrix)))
-    for i, x in enumerate(input_list):
-        for j, node in enumerate(node_matrix):
-            phi_matrix[i, j] = phi_i(x, node, col[i])
+def make_phi_matrix(node_matrix, y_list, x_axis, batch=True):
+    if batch:
+        # y list is a list
+        phi_matrix = np.zeros((len(y_list), len(node_matrix)))
+        for i, label in enumerate(y_list):
+            for j, node in enumerate(node_matrix):
+                phi_matrix[i, j] = phi_i(label, node, x_axis[i])
+    else:
+        # y list is a scalar
+        phi_matrix = np.zeros((len(y_list), len(node_matrix)))
+        # 1 node is x,y,sigma2
+        for i, node in enumerate(node_matrix):
+            # x-axis is just the current x in the sequence
+            phi_matrix[0, i] = phi_i(y_list[0], node, x_axis)
+
+
 
     return phi_matrix
 
@@ -94,7 +105,7 @@ def sequential_delta(input_x, label, rbf_nodes, weights, input_x_list):
     expected error e ~ instantaneous error ê = 
      = 0.5 * (f(latest pattern) - f^(latest pattern))^2 = 0.5error^2 
     '''
-    phi_x = make_phi_matrix(rbf_nodes, input_x, input_x_list)  # input is scalar so phi_x is 1xnodes so transpose needed
+    phi_x = make_phi_matrix(rbf_nodes, [label], input_x, False)  # input is scalar so phi_x is 1xnodes so transpose needed
     e = label - np.dot(phi_x, weights)
     delta_w = ETA * e * phi_x
     # delta_w becomes 1xnodes
@@ -109,8 +120,8 @@ def weight_update(x_k, y_k, nodes_lists, w_m1, w_m2, w_m3, input_x):
 
 
 def test_8_nodes():
-    #np.random.seed(1)
-    input_x, train_sin, _, test_sin, _ = generate_set(True)
+    np.random.seed(1)
+    input_x, train_sin, train_box, test_sin, test_box = generate_set(True)
     #x, train_sin_true, _, test_sin, _ = generate_set(True)
 
     #shuffle input points
@@ -123,21 +134,24 @@ def test_8_nodes():
     # learning loop
     for epoch in range(EPOCH):
         for k, x_k in enumerate(input_x):
-            delta_w = sequential_delta(x_k, train_sin[k], nodes, weights, input_x)
+            delta_w = sequential_delta(x_k, train_box[k], nodes, weights, input_x)
             weights += delta_w
+        # move preds up to make this plot
+        #plotter.plot_line(input_x, np.dot(preds, weights), f"{epoch}")
         #input_x, train_sin, index_list = shuffle_data(input_x, train_sin)
 
 
     # 63x4 * 4x1 = 63x1
-    preds = make_phi_matrix(nodes, test_sin, input_x+0.05)
+    preds = make_phi_matrix(nodes, test_box, input_x+0.05)
     preds = np.dot(preds, weights)
     
     #preds = reverse_shuffle(preds, index_list)
    
     #plotter.plot_line(x, preds)
     #plotter.plot_line(x, train_sin_true)
-    plotter.plot_line(input_x, preds)
-    plotter.plot_line(input_x, train_sin)
+    plotter.plot_line(input_x, preds, "final prediction", "dotted")
+    plotter.plot_line(input_x, train_box, "true line")
+    plt.legend()
     plt.show()
         
 
@@ -298,16 +312,17 @@ def task1():
 def task2():
     # generate a noisy dataset, noise for both train and test
     input_x, train_sin, train_box, test_sin, test_box = generate_set(noise=True)
-
+    '''
     #shuffle input points
     input_x, train_sin, index_list = shuffle_data(input_x, train_sin)
     
     #reorder them back again
     ordered_y = reverse_shuffle(input_x, train_sin, index_list)
    
+    '''
 
     x = np.arange(0, 2 * np.pi, 0.1)
-    plotter.plot_line(x, ordered_y, "True noisy line sin")
+    plotter.plot_line(x, train_sin, "True noisy line sin")
     #plotter.plot_line(input_x, train_box, "True noisy line box")
     plt.legend()
     #plt.show()
@@ -333,16 +348,17 @@ def task2():
     pred_1_sin = np.dot(make_phi_matrix(nodes_lists[0], test_sin, input_x+0.05), w_m1)
     pred_2_sin = np.dot(make_phi_matrix(nodes_lists[1], test_sin, input_x+0.05), w_m2)
     pred_3_sin = np.dot(make_phi_matrix(nodes_lists[2], test_sin, input_x+0.05), w_m3)
-
+    '''
     #shuffle predictions to original order
     pred_1_sin = reverse_shuffle(input_x, pred_1_sin, index_list)
     pred_2_sin = reverse_shuffle(input_x, pred_2_sin, index_list)
+    '''
 
     plotter.plot_line(x, pred_1_sin, "4 nodes")
     plotter.plot_line(x, pred_2_sin, "12 nodes")
-    '''
+    
     plotter.plot_line(input_x, pred_3_sin, "8 nodes")
-    '''
+    
     plt.legend()
     plt.show()
    
@@ -359,6 +375,7 @@ def box2x(x):
 
 
 def phi_i(y_coor, mu, x_coor):
+    # point is (x, label) where x is 0, 0.1 0.2... for sequential
     point = np.array([x_coor[0], y_coor])
     phi = np.exp((- (np.linalg.norm(point - mu[:2]) ** 2) / (2 * mu[2])))
     return phi
@@ -398,5 +415,5 @@ def main(task):
     # Task 3: Competitive learning (CL) to initialise RBF units
     return None
 
-test_8_nodes()
-#main(2)
+#test_8_nodes()
+main(2)
