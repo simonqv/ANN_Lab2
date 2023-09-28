@@ -72,13 +72,16 @@ def make_node_matrix():
     return four, twelve, eight, twenty
 
 
-def make_phi_matrix(node_matrix, y_list, x_axis, batch=True):
+def make_phi_matrix(node_matrix, y_list, x_axis, batch=True, task_ball=False):
     if batch:
         # y list is a list
         phi_matrix = np.zeros((len(y_list), len(node_matrix)))
         for i, label in enumerate(y_list):
             for j, node in enumerate(node_matrix):
-                phi_matrix[i, j] = phi_i(label, node, x_axis[i])
+                if task_ball:
+                    phi_matrix[i, j] = phi_i(label, node, [x_axis[i]])
+                else: 
+                    phi_matrix[i, j] = phi_i(label, node, x_axis[i])
     else:
         # y list is a scalar
         phi_matrix = np.zeros((len(y_list), len(node_matrix)))
@@ -86,18 +89,16 @@ def make_phi_matrix(node_matrix, y_list, x_axis, batch=True):
         for i, node in enumerate(node_matrix):
             # x-axis is just the current x in the sequence
             phi_matrix[0, i] = phi_i(y_list[0], node, x_axis)
-
-
-
     return phi_matrix
 
 
-def batch_least_squares(phi_mat, train):
+def batch_least_squares(phi_mat, train, task_ball=False):
     # calculate weight matrix with least square method
     phiT_phi = np.dot(phi_mat.T, phi_mat)
-
-    phi_f = np.dot(phi_mat.T, train).reshape(-1, 1)
-
+    if not task_ball:
+        phi_f = np.dot(phi_mat.T, train).reshape(-1, 1)
+    else:
+        phi_f = np.dot(phi_mat.T, train)
     w, _, _, _ = np.linalg.lstsq(phiT_phi, phi_f)
 
     return w
