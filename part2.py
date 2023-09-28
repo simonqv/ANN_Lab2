@@ -22,15 +22,27 @@ def read_data_binary(file_path, dimensions):
     return data_arr[:dimensions[0] * dimensions[1]].reshape((dimensions[0], dimensions[1]))
 
 
-def read_data_strings(file_path, dim = (-1, 1)):
+def read_votes(file_path, dimensions):
+    with open(file_path, 'r') as file:
+        data = file.read()
+    data = data.split(",")
+    data = [float(char) for char in data]
+    data_arr = np.array(data)
+    return data_arr[:dimensions[0] * dimensions[1]].reshape((dimensions[0], dimensions[1]))
+
+
+def read_data_strings(file_path, dim = (-1, 1), names=False):
     """
     Reads a file with strings and converts to a vector with the strings in order. 
     File contains strings followed by newlines
     :param file_path: path to the data file
     """
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='UTF-8') as file:
         data = file.readlines()
-    string_arr = np.array([line.strip().replace('\'', '').replace(';', '').replace(',', '').split() for line in data])
+    if not names:
+        string_arr = np.array([line.strip().replace('\'', '').replace(';', '').replace(',', '').split() for line in data])
+    else:
+        string_arr = np.array([line.strip().replace('\'', '').replace(';', '').replace(',', '') for line in data])
     return string_arr.reshape(dim)
 
 
@@ -56,6 +68,30 @@ def read_all_input_task2():
     file_path_cities = "data/cities.dat"
     f = read_data_strings(file_path_cities, (10, 2)).astype(float)
     return f
+
+
+def read_all_input_task3():
+    # These are only numbers in a column
+    
+    # Coding: 0=no party, 1='m', 2='fp', 3='s', 4='v', 5='mp', 6='kd', 7='c'
+    # Use some color scheme for these different groups
+    path_mpparty = "data/mpparty.dat"
+    # % Coding: Male 0, Female 1
+    path_mpsex = "data/mpsex.dat"
+    path_mpdistrict = "data/mpdistrict.dat"
+    
+    path_mpnames = "data/mpnamestest.txt"
+    path_votes = "data/votes.dat"
+
+    party = read_data_strings(path_mpparty, (349, 1)).astype(int)
+    sex = read_data_strings(path_mpsex, (349, 1)).astype(int)
+    district = read_data_strings(path_mpdistrict, (349, 1)).astype(int)
+
+    names = read_data_strings(path_mpnames, (349, 1), True)
+    
+    votes = read_votes(path_votes, (349, 31))
+
+    return party, sex, district, names, votes
 
 
 def update_winner_and_neighbours(attributes, weights, ind, epoch, task2):
@@ -140,7 +176,12 @@ def task2():
 
 
 def task3():
-    return None
+    SOM_dimensions = [10, 10]
+
+    party, sex, district, names, votes = read_all_input_task3()
+
+    init_w = np.random.rand(SOM_dimensions[0], SOM_dimensions[1])
+
 
 def main():
     # task1()
