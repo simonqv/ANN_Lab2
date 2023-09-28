@@ -139,6 +139,21 @@ def print_animals(animal_names, animal_data, weights):
     sorted_animals = animal_names[sorting_inds]
     for animal in sorted_animals:
         print(animal[0])
+    return sorted_animals
+
+def creat_node_matrix(attributes, votes, weights):
+    node_matrix = [[] for _ in range(100)]
+    pos = []
+    # TODO: think about if it is correct to only have one input node and not one for each attribute(vote)
+    for i, personal_attribute in enumerate(attributes):
+        vote_vec = votes[i]
+        distances = np.linalg.norm(weights - vote_vec, axis=1)
+        # vilken node hör den här vikten till?
+        min_dist_ind = int(np.argmin(distances))
+        node_matrix[min_dist_ind].append(personal_attribute[0])
+       
+ 
+    return node_matrix
 
 
 def task1():
@@ -176,11 +191,34 @@ def task2():
 
 
 def task3():
-    SOM_dimensions = [10, 10]
+    # SOM_dimensions = [10, 10]
+    #   x   x   x
+    #   x   x   x
+    #   x   x   x
+    weight_dimensions = [100, 31]
+
+    # number of weight vectors should be the number of features times the number of clusters (100)
+    # total number of weight vectors are 31 x 100
 
     party, sex, district, names, votes = read_all_input_task3()
 
-    init_w = np.random.rand(SOM_dimensions[0], SOM_dimensions[1])
+    #init_w = np.random.rand(SOM_dimensions[0], SOM_dimensions[1])
+    init_w = np.random.rand(weight_dimensions[0], weight_dimensions[1])
+ 
+    weights = SOM_alg(votes, init_w.copy())
+
+    node_matrix_all = creat_node_matrix(party, votes, weights)
+    print(node_matrix_all)
+    # TODO: for each row in node matrix, check which value is most common. 
+    # Plot / heatmap the most common onto that row's square in the grid (row 1 has pos 1,1 in grid, 
+    # row 11 has pos 2,1)
+
+
+    #sorted_party = print_animals(party, votes, weights)
+    #print(len(sorted_party))
+   
+
+
 
 
 def main():
