@@ -7,25 +7,6 @@ EPOCHS = 20
 ETA = 0.2
 
 
-"""
-def load_ball_data(file_path):
-    data = np.loadtxt(file_path)
-    # Split the data into separate arrays for each column
-    columns = np.hsplit(data, 4)
-    # print(columns)
-    angle = columns[0].reshape(len(columns[0]), 1)
-    velocity = columns[1].reshape(len(columns[1]), 1)
-    distance = columns[2].reshape(len(columns[2]), 1)
-    height = columns[3].reshape(len(columns[3]), 1)
-    # print("SHAPEH", angle.shape)
-
-    pattern = np.concatenate((angle, velocity), axis=1)
-    target = np.concatenate((distance, height), axis=1)
-
-    return pattern, target # angle, velocity, distance, height
-
-"""
-
 def read_data_binary(file_path, dimensions):
     """
     Reads file as one long string, replaces commas etc. and makes it into specified matrix size. 
@@ -147,14 +128,23 @@ def task2():
     w = SOM_alg(data, init_w.copy())
 
 
-    plt.scatter(init_w[:,0], init_w[:,1], c="red", alpha=0.1)
-    plt.scatter(w[:,0], w[:,1], c="b", marker="x")
-    plt.scatter(data[:,0], data[:,1])
+    # plt.scatter(init_w[:,0], init_w[:,1], c="red", alpha=0.1)
+    plt.scatter(w[:,0], w[:,1],label="SOM nodes")
+    plt.scatter(data[:,0], data[:,1], c="black", marker="s", label="Cities")
+    plt.plot(w[:,0], w[:,1], label="Route")
+    plt.legend()
+    plt.title("Cyclic Tour Between Cities")
+    plt.xlabel("x position")
+    plt.ylabel("y position")
     plt.show()
+
+
+def task3():
+    return None
 
 def main():
     # task1()
-    task2()
-    
+    # task2()
+    task3()
 
 main()
