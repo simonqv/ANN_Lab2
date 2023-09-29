@@ -157,6 +157,22 @@ def creat_node_matrix(attributes, votes, weights):
  
     return node_matrix
 
+def create_mat_map(node_mat):
+    map_mat = np.zeros((10, 10))
+    col = 0
+    r = 0
+    for i, row in enumerate(node_mat):
+        if i%10 == 0 and i > 0:
+            col = 0
+            r += 1
+        if len(row) == 0:
+            most_freq = 0
+        else:
+            most_freq = (Counter(row)).most_common(1)[0][0]
+        map_mat[r, col] = int(most_freq)
+        col += 1
+    return map_mat
+
 
 def task1():
     SOM_dimensions = [100, 84]
@@ -208,37 +224,35 @@ def task3():
 
     party, sex, district, names, votes = read_all_input_task3()
 
-    #init_w = np.random.rand(SOM_dimensions[0], SOM_dimensions[1])
     init_w = np.random.rand(weight_dimensions[0], weight_dimensions[1])
  
+    # TODO: REPEAT FOR ALL (sex, district, (names?))
     weights = SOM_alg(votes, init_w.copy())
-
-    node_matrix_all = creat_node_matrix(party, votes, weights)
+    node_matrix_all_party = creat_node_matrix(party, votes, weights)
+    mat_map_party = create_mat_map(node_matrix_all_party)
     
-    # TODO: for each row in node matrix, check which value is most common. 
-    # Plot / heatmap the most common onto that row's square in the grid (row 1 has pos 1,1 in grid, 
-    # row 11 has pos 2,1)
-    #node_matrix_all = np.array(node_matrix_all).reshape(10,10)
-    map_mat = np.zeros((10, 10))
-    col = 0
-    r = 0
-    for i, row in enumerate(node_matrix_all):
-        if i%10 == 0 and i > 0:
-            col = 0
-            r += 1
-        if len(row) == 0:
-            most_freq = 0
-        else:
-            most_freq = (Counter(row)).most_common(1)[0][0]
-        map_mat[r, col] = int(most_freq)
-        col += 1
+   
 
-    print(map_mat)
-    # TODO: make the colors correspond to parties
+    print(mat_map_party)
+    # TODO: make the colors correspond to parties!!
+    # Coding: 0=no party, 1='m', 2='fp', 3='s', 4='v', 5='mp', 6='kd', 7='c'
+
+    '''
+        Centerpartiet	Skogsgrön	#009933
+      
+        Kristdemokraterna	Mörkblå	#000077
+        Liberalerna	Marinblå	#006AB3
+        Miljöpartiet	Maskrosgrön	#83CF39
+        Moderaterna	Ljusblå	#52BDEC
+      
+        Socialdemokraterna	Röd	#E8112d
+        
+        Vänsterpartiet	Mörkröd	#DA291C
+    '''
     colors_list = ["#FFF", "#530", "#fe2020", "#220b22", "#4cbb17", "#007fff", "#1c05b3", "#03045e"]
     color_map = colors.ListedColormap(colors_list)
 
-    plt.imshow(map_mat, cmap=color_map)
+    plt.imshow(mat_map_party, cmap=color_map)
     plt.colorbar()
     plt.show()
 
