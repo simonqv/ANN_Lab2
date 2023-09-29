@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from collections import Counter
 import matplotlib.colors as colors
+import matplotlib
 
 EPOCHS = 6
 ETA = 0.2
@@ -184,7 +185,7 @@ def create_mat_map(node_mat):
             col = 0
             r += 1
         if len(row) == 0:
-            most_freq = 0
+            most_freq = -1
         else:
             most_freq = (Counter(row)).most_common(1)[0][0]
         map_mat[r, col] = int(most_freq)
@@ -248,7 +249,7 @@ def task3():
 
     print(mat_map_party)
     # TODO: make the colors correspond to parties!!
-    # Coding: 0=no party, 1='m', 2='fp', 3='s', 4='v', 5='mp', 6='kd', 7='c'
+    # Coding: -1 no votes, 0=no party, 1='m', 2='fp', 3='s', 4='v', 5='mp', 6='kd', 7='c'
 
     '''
         Centerpartiet	Skogsgrön	#009933
@@ -262,13 +263,23 @@ def task3():
         
         Vänsterpartiet	Mörkröd	#DA291C
     '''
-    colors_list = ["#FFF", "#530", "#fe2020", "#220b22", "#4cbb17", "#007fff", "#1c05b3", "#03045e"]
+    colors_list = ["#FFFFFF", "#652A0E", "#52BDEC", "#006AB3", "#E8112d", "#870000", "#83CF39", "#000077", "#009933"]
     color_map = colors.ListedColormap(colors_list)
 
     plt.figure(1)
-    plt.imshow(mat_map_party, cmap=color_map)
-    plt.colorbar()
+    plt.imshow(mat_map_party, cmap=color_map, alpha=0.8)
+    plt.colorbar(spacing="proportional")
+    plt.colorbar().ax.tick_params(labelsize=10)
     plt.title("Party")
+
+    qrates = list("ABCDEFG")
+    norm = colors.BoundaryNorm(np.linspace(-3.5, 3.5, 8), 7)
+    fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: qrates[::-1][norm(x)])
+
+    im, _ = heatmap(data, y, x, ax=ax3,
+                cmap=mpl.colormaps["PiYG"].resampled(7), norm=norm,
+                cbar_kw=dict(ticks=np.arange(-3, 4), format=fmt),
+                cbarlabel="Quality Rating")
 
     """
     # TODO: REPEAT FOR ALL (sex, district, (names?))
@@ -284,6 +295,8 @@ def task3():
     plt.show()
 
     """
+
+    '''
     plt.figure(3)
 
     mp_attr_names = ["Party", "District", "Sex"]
@@ -323,6 +336,7 @@ def task3():
         plt.ylim([-0.5, 10 - 0.5])
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
+    '''
     plt.show()
 
 
