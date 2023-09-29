@@ -2,6 +2,7 @@
 from matplotlib import pyplot as plt
 import numpy as np
 from collections import Counter
+import matplotlib.colors as colors
 
 
 EPOCHS = 20
@@ -233,8 +234,11 @@ def task3():
         col += 1
 
     print(map_mat)
+    # TODO: make the colors correspond to parties
+    colors_list = ["#FFF", "#530", "#fe2020", "#220b22", "#4cbb17", "#007fff", "#1c05b3", "#03045e"]
+    color_map = colors.ListedColormap(colors_list)
 
-    plt.imshow(map_mat)
+    plt.imshow(map_mat, cmap=color_map)
     plt.colorbar()
     plt.show()
 
