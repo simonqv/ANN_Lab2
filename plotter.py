@@ -19,6 +19,16 @@ def plot_line(x_axis, y, lab=None, line_type="-"):
 
 
 def points(m1, m2, m3, p1=False, p2=False, p3=False):
+    """
+    Beskrivning
+    :param m1:
+    :param m2:
+    :param m3:
+    :param p1:
+    :param p2:
+    :param p3:
+    :return: geometrisk
+    """
     if p1:
         p1x = []
         p1y = []

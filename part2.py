@@ -1,11 +1,9 @@
-
 from matplotlib import pyplot as plt
 import numpy as np
 from collections import Counter
 import matplotlib.colors as colors
 
-
-EPOCHS = 20
+EPOCHS = 6
 ETA = 0.2
 
 
@@ -33,7 +31,7 @@ def read_votes(file_path, dimensions):
     return data_arr[:dimensions[0] * dimensions[1]].reshape((dimensions[0], dimensions[1]))
 
 
-def read_data_strings(file_path, dim = (-1, 1), names=False):
+def read_data_strings(file_path, dim=(-1, 1), names=False):
     """
     Reads a file with strings and converts to a vector with the strings in order. 
     File contains strings followed by newlines
@@ -42,7 +40,8 @@ def read_data_strings(file_path, dim = (-1, 1), names=False):
     with open(file_path, 'r', encoding='UTF-8') as file:
         data = file.readlines()
     if not names:
-        string_arr = np.array([line.strip().replace('\'', '').replace(';', '').replace(',', '').split() for line in data])
+        string_arr = np.array(
+            [line.strip().replace('\'', '').replace(';', '').replace(',', '').split() for line in data])
     else:
         string_arr = np.array([line.strip().replace('\'', '').replace(';', '').replace(',', '') for line in data])
     return string_arr.reshape(dim)
@@ -55,7 +54,7 @@ def read_all_input_task1():
 
     file_path_animal_names = "data/animalnames.txt"
     file_path_animal_attributes = "data/animalattributes.txt"
-    animal_names = read_data_strings(file_path_animal_names) 
+    animal_names = read_data_strings(file_path_animal_names)
     animal_attributes = read_data_strings(file_path_animal_attributes)
 
     return animal_data, animal_names, animal_attributes
@@ -74,14 +73,14 @@ def read_all_input_task2():
 
 def read_all_input_task3():
     # These are only numbers in a column
-    
+
     # Coding: 0=no party, 1='m', 2='fp', 3='s', 4='v', 5='mp', 6='kd', 7='c'
     # Use some color scheme for these different groups
     path_mpparty = "data/mpparty.dat"
     # % Coding: Male 0, Female 1
     path_mpsex = "data/mpsex.dat"
     path_mpdistrict = "data/mpdistrict.dat"
-    
+
     path_mpnames = "data/mpnamestest.txt"
     path_votes = "data/votes.dat"
 
@@ -90,19 +89,19 @@ def read_all_input_task3():
     district = read_data_strings(path_mpdistrict, (349, 1)).astype(int)
 
     names = read_data_strings(path_mpnames, (349, 1), True)
-    
+
     votes = read_votes(path_votes, (349, 31))
 
     return party, sex, district, names, votes
 
 
-def update_winner_and_neighbours(attributes, weights, ind, epoch, task2):
-    if not task2:
-        for i in range(ind - EPOCHS + epoch , ind + EPOCHS - epoch):
-            if i >= 0 and i < len(weights):
+def update_winner_and_neighbours(attributes, weights, ind, epoch, out_ind_mat, task2_flag, task3_flag):
+    if not task2_flag and not task3_flag:
+        for i in range(ind - EPOCHS + epoch, ind + EPOCHS - epoch):
+            if 0 <= i < len(weights):
                 diff = attributes - weights[i]
                 weights[i] += ETA * diff
-    else: 
+    elif task2_flag and not task3_flag:
         if epoch < 10:
             for j in range(ind - 2, ind + 3):
                 diff = attributes - weights[j % len(weights)]
@@ -112,20 +111,37 @@ def update_winner_and_neighbours(attributes, weights, ind, epoch, task2):
                 diff = attributes - weights[j % len(weights)]
                 weights[j % len(weights)] += ETA * diff
         else:
-            diff = attributes - weights[j % len(weights)]
-            weights[ind % len(weights)] += ETA * diff
-    
+            for j in range(ind, ind):
+                diff = attributes - weights[j % len(weights)]
+                weights[ind % len(weights)] += ETA * diff
+    elif task3_flag and not task2_flag:
+        nh_rad = EPOCHS - epoch - 1
+        winner_x, winner_y = np.unravel_index(ind, (10, 10))
+        inds = []
+        for i in range(10):
+            for j in range(10):
+                if (abs(winner_x - i) + abs(winner_y - j)) <= nh_rad:
+                    inds.append(out_ind_mat[i, j])
+
+        diff = attributes - weights[inds, :]
+        weights[inds, :] += ETA * diff
+
     return weights
 
 
-def SOM_alg(data, weights, task2=False):
+def SOM_alg(data, weights, task2_flag=False, task3_flag=False):
+    if task3_flag:
+        out_ind_mat = np.arange(np.prod((10, 10))).reshape((10, 10))
+    else:
+        out_ind_mat = []
+
     for epoch in range(EPOCHS):
         for i, row in enumerate(data):
             attributes = row
             distances = np.linalg.norm(weights - attributes, axis=1)
             min_dist_ind = np.argmin(distances)
 
-            weights = update_winner_and_neighbours(attributes, weights, min_dist_ind, epoch, task2)
+            weights = update_winner_and_neighbours(attributes, weights, min_dist_ind, epoch, out_ind_mat, task2_flag, task3_flag)
     return weights
 
 
@@ -137,32 +153,30 @@ def print_animals(animal_names, animal_data, weights):
         min_dist_ind = np.argmin(distances)
         pos.append(min_dist_ind)
     sorting_inds = np.argsort(pos)
-    
+
     sorted_animals = animal_names[sorting_inds]
     for animal in sorted_animals:
         print(animal[0])
     return sorted_animals
 
+
 def creat_node_matrix(attributes, votes, weights):
     node_matrix = [[] for _ in range(100)]
-    pos = []
-    # TODO: think about if it is correct to only have one input node and not one for each attribute(vote)
     for i, personal_attribute in enumerate(attributes):
         vote_vec = votes[i]
         distances = np.linalg.norm(weights - vote_vec, axis=1)
-        # vilken node hör den här vikten till?
         min_dist_ind = int(np.argmin(distances))
         node_matrix[min_dist_ind].append(personal_attribute[0])
-       
- 
+
     return node_matrix
+
 
 def create_mat_map(node_mat):
     map_mat = np.zeros((10, 10))
     col = 0
     r = 0
     for i, row in enumerate(node_mat):
-        if i%10 == 0 and i > 0:
+        if i % 10 == 0 and i > 0:
             col = 0
             r += 1
         if len(row) == 0:
@@ -179,7 +193,7 @@ def task1():
 
     # Get data
     animal_data, animal_names, animal_attributes = read_all_input_task1()
-    
+
     # Make init weights
     init_w = np.random.rand(SOM_dimensions[0], SOM_dimensions[1])
     weights = SOM_alg(animal_data, init_w.copy())
@@ -196,11 +210,10 @@ def task2():
 
     w = SOM_alg(data, init_w.copy())
 
-
     # plt.scatter(init_w[:,0], init_w[:,1], c="red", alpha=0.1)
-    plt.scatter(w[:,0], w[:,1],label="SOM nodes")
-    plt.scatter(data[:,0], data[:,1], c="black", marker="s", label="Cities")
-    plt.plot(w[:,0], w[:,1], label="Route")
+    plt.scatter(w[:, 0], w[:, 1], label="SOM nodes")
+    plt.scatter(data[:, 0], data[:, 1], c="black", marker="s", label="Cities")
+    plt.plot(w[:, 0], w[:, 1], label="Route")
     plt.legend()
     plt.title("Cyclic Tour Between Cities")
     plt.xlabel("x position")
@@ -211,27 +224,19 @@ def task2():
 def task3():
     # number of weight vectors should be the number of features times the number of clusters (100)
     # total number of weight vectors are 31 x 100
-    
-    # SOM_dimensions = [10, 10]
-    #   x   x   x
-    #   x   x   x
-    #   x   x   x
-    weight_dimensions = [100, 31]  
-    # NOTE: in somalg we treat each input vector as one, like we only have one input node so we dont have one 
-    # weight for each feature, thus only 349 weight vectors are created
-    # 
 
+    # SOM_output_grid_dimensions = [10, 10]
+
+    weight_dimensions = [100, 31]
 
     party, sex, district, names, votes = read_all_input_task3()
 
     init_w = np.random.rand(weight_dimensions[0], weight_dimensions[1])
- 
+
     # TODO: REPEAT FOR ALL (sex, district, (names?))
     weights = SOM_alg(votes, init_w.copy())
     node_matrix_all_party = creat_node_matrix(party, votes, weights)
     mat_map_party = create_mat_map(node_matrix_all_party)
-    
-   
 
     print(mat_map_party)
     # TODO: make the colors correspond to parties!!
@@ -252,19 +257,29 @@ def task3():
     colors_list = ["#FFF", "#530", "#fe2020", "#220b22", "#4cbb17", "#007fff", "#1c05b3", "#03045e"]
     color_map = colors.ListedColormap(colors_list)
 
+    plt.figure(1)
     plt.imshow(mat_map_party, cmap=color_map)
     plt.colorbar()
+    plt.title("Party")
+
+
+    # TODO: REPEAT FOR ALL (sex, district, (names?))
+    weights = SOM_alg(votes, init_w.copy())
+    node_matrix_all_sex = creat_node_matrix(sex, votes, weights)
+    mat_map_sex = create_mat_map(node_matrix_all_sex)
+
+    plt.figure(2)
+    colors_s = 2
+    plt.imshow(mat_map_sex, cmap=colors.ListedColormap(colors_list[:3]))
+    plt.colorbar()
+    plt.title("Sex")
     plt.show()
-
-
-   
-
-
 
 
 def main():
     # task1()
     # task2()
     task3()
+
 
 main()
