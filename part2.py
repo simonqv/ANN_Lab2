@@ -246,8 +246,8 @@ def task3():
     weights, predicted_output_node, order_inputs, = SOM_alg(votes, init_w.copy())
     node_matrix_all_party = creat_node_matrix(party, votes, weights)
     mat_map_party = create_mat_map(node_matrix_all_party)
-
     print(mat_map_party)
+
     # TODO: make the colors correspond to parties!!
     # Coding: -1 no votes, 0=no party, 1='m', 2='fp', 3='s', 4='v', 5='mp', 6='kd', 7='c'
 
@@ -263,26 +263,28 @@ def task3():
         
         Vänsterpartiet	Mörkröd	#DA291C
     '''
-    colors_list = ["#FFFFFF", "#652A0E", "#52BDEC", "#006AB3", "#E8112d", "#870000", "#83CF39", "#000077", "#009933"]
+    colors_list = ["#FFFFFF", "#000000", "#52BDEC", "#006AB3", "#E8112d", "#870000", "#83CF39", "#000077", "#009933"]
     color_map = colors.ListedColormap(colors_list)
-    """
+
     plt.figure(1)
     plt.imshow(mat_map_party, cmap=color_map, alpha=0.8)
-    plt.colorbar(spacing="proportional")
-    plt.colorbar().ax.tick_params(labelsize=10)
+    plt.colorbar(ticks=[]).ax.tick_params(labelsize=10)
     plt.title("Party")
-    
 
-    qrates = list("ABCDEFG")
-    norm = colors.BoundaryNorm(np.linspace(-3.5, 3.5, 8), 7)
-    fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: qrates[::-1][norm(x)])
+    # ---- Sex ------
+    node_matrix_all_sex = creat_node_matrix(sex, votes, weights)
+    mat_map_sex = create_mat_map(node_matrix_all_sex)
 
-    im, _ = heatmap(data, y, x, ax=ax3,
-                cmap=mpl.colormaps["PiYG"].resampled(7), norm=norm,
-                cbar_kw=dict(ticks=np.arange(-3, 4), format=fmt),
-                cbarlabel="Quality Rating")
+    plt.figure(2)
+    color_map = colors.ListedColormap(colors_list[:3])
+    plt.imshow(mat_map_sex, cmap=color_map, alpha=0.8)
+    plt.colorbar(ticks=[-1, 0, 1]).ax.tick_params(labelsize=10)
+    plt.title("Sex")
 
-    """
+
+
+    '''
+   
     # TODO: REPEAT FOR ALL (sex, district, (names?))
     weights = SOM_alg(votes, init_w.copy())
     node_matrix_all_sex = creat_node_matrix(sex, votes, weights)
@@ -295,8 +297,7 @@ def task3():
     plt.title("Sex")
     plt.show()
 
-    """
-
+    '''
     
     plt.figure(3)
 
@@ -312,7 +313,7 @@ def task3():
         ["District " + str(d) for d in np.unique(district)],
         ["Male", "Female"]]
     plot_colors = [
-        ["black", "#52BDEC", "#006AB3", "#E8112d", "pink", "#83CF39", "#000077", "#009933"],
+        colors_list[1:],#["black", "#52BDEC", "#006AB3", "#E8112d", "pink", "#83CF39", "#000077", "#009933"],
         [],
         []
     ]
@@ -329,17 +330,17 @@ def task3():
         for val in np.unique(mp_attrs[:, attr]):
             # Find the output node assigned to each minister with that feature value
             x, y = np.unravel_index(predicted_output_node[mp_attrs[:, attr] == val], (10, 10))
-
+            #print(x, y)
             # Plot the position in output space of each minister with that feature value
             if attr == 0:
-                plt.scatter(noisy_index(x), noisy_index(y), s=20, alpha=1, label=mp_attr_levels[attr][val - 1], c=plot_colors[attr][val - 1])
+                plt.scatter(noisy_index(x), noisy_index(y), s=20, alpha=1, label=mp_attr_levels[attr][val-1], c=plot_colors[attr][val - 1])
             else:
-                plt.scatter(noisy_index(x), noisy_index(y), s=20, alpha=1, label=mp_attr_levels[attr][val - 1])
+                plt.scatter(noisy_index(x), noisy_index(y), s=20, alpha=1, label=mp_attr_levels[attr][val-1])
 
         # Edit the plot
         plt.title(mp_attr_names[attr], fontsize=30, y=1.02)
-        plt.xticks(np.arange(-0.5, 10 - 0.5, 1), labels=[])
-        plt.yticks(np.arange(-0.5, 10 - 0.5, 1), labels=[])
+        plt.xticks(np.arange(-0.5, 10 - 0.5, 1))#, labels=[])
+        plt.yticks(np.arange(-0.5, 10 - 0.5, 1))#, labels=[])
         plt.grid(True)
         plt.xlim([-0.5, 10 - 0.5])
         plt.ylim([-0.5, 10 - 0.5])
