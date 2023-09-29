@@ -1,6 +1,7 @@
 
 from matplotlib import pyplot as plt
 import numpy as np
+from collections import Counter
 
 
 EPOCHS = 20
@@ -191,14 +192,18 @@ def task2():
 
 
 def task3():
+    # number of weight vectors should be the number of features times the number of clusters (100)
+    # total number of weight vectors are 31 x 100
+    
     # SOM_dimensions = [10, 10]
     #   x   x   x
     #   x   x   x
     #   x   x   x
-    weight_dimensions = [100, 31]
+    weight_dimensions = [100, 31]  
+    # NOTE: in somalg we treat each input vector as one, like we only have one input node so we dont have one 
+    # weight for each feature, thus only 349 weight vectors are created
+    # 
 
-    # number of weight vectors should be the number of features times the number of clusters (100)
-    # total number of weight vectors are 31 x 100
 
     party, sex, district, names, votes = read_all_input_task3()
 
@@ -208,14 +213,32 @@ def task3():
     weights = SOM_alg(votes, init_w.copy())
 
     node_matrix_all = creat_node_matrix(party, votes, weights)
-    print(node_matrix_all)
+    
     # TODO: for each row in node matrix, check which value is most common. 
     # Plot / heatmap the most common onto that row's square in the grid (row 1 has pos 1,1 in grid, 
     # row 11 has pos 2,1)
+    #node_matrix_all = np.array(node_matrix_all).reshape(10,10)
+    map_mat = np.zeros((10, 10))
+    col = 0
+    r = 0
+    for i, row in enumerate(node_matrix_all):
+        if i%10 == 0 and i > 0:
+            col = 0
+            r += 1
+        if len(row) == 0:
+            most_freq = 0
+        else:
+            most_freq = (Counter(row)).most_common(1)[0][0]
+        map_mat[r, col] = int(most_freq)
+        col += 1
+
+    print(map_mat)
+
+    plt.imshow(map_mat)
+    plt.colorbar()
+    plt.show()
 
 
-    #sorted_party = print_animals(party, votes, weights)
-    #print(len(sorted_party))
    
 
 
