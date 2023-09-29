@@ -142,7 +142,11 @@ def SOM_alg(data, weights, task2_flag=False, task3_flag=False):
             min_dist_ind = np.argmin(distances)
 
             weights = update_winner_and_neighbours(attributes, weights, min_dist_ind, epoch, out_ind_mat, task2_flag, task3_flag)
-    return weights
+
+    predicted_output_node = [np.argmin(np.linalg.norm(weights - row, axis=1)) for row in data]
+    order_inputs = np.argsort(predicted_output_node)
+
+    return weights, np.array(predicted_output_node), order_inputs,
 
 
 def print_animals(animal_names, animal_data, weights):
@@ -188,6 +192,10 @@ def create_mat_map(node_mat):
     return map_mat
 
 
+def noisy_index(point, noise=0.4):
+    return point.astype(float)+np.random.uniform(-noise, noise, size=point.shape)
+
+
 def task1():
     SOM_dimensions = [100, 84]
 
@@ -196,7 +204,7 @@ def task1():
 
     # Make init weights
     init_w = np.random.rand(SOM_dimensions[0], SOM_dimensions[1])
-    weights = SOM_alg(animal_data, init_w.copy())
+    weights, _, _ = SOM_alg(animal_data, init_w.copy())
 
     print_animals(animal_names, animal_data, weights)
 
@@ -208,7 +216,7 @@ def task2():
 
     init_w = np.random.rand(SOM_dimensions[0], SOM_dimensions[1])
 
-    w = SOM_alg(data, init_w.copy())
+    w, _, _ = SOM_alg(data, init_w.copy())
 
     # plt.scatter(init_w[:,0], init_w[:,1], c="red", alpha=0.1)
     plt.scatter(w[:, 0], w[:, 1], label="SOM nodes")
@@ -234,7 +242,7 @@ def task3():
     init_w = np.random.rand(weight_dimensions[0], weight_dimensions[1])
 
     # TODO: REPEAT FOR ALL (sex, district, (names?))
-    weights = SOM_alg(votes, init_w.copy())
+    weights, predicted_output_node, order_inputs, = SOM_alg(votes, init_w.copy())
     node_matrix_all_party = creat_node_matrix(party, votes, weights)
     mat_map_party = create_mat_map(node_matrix_all_party)
 
@@ -262,7 +270,7 @@ def task3():
     plt.colorbar()
     plt.title("Party")
 
-
+    """
     # TODO: REPEAT FOR ALL (sex, district, (names?))
     weights = SOM_alg(votes, init_w.copy())
     node_matrix_all_sex = creat_node_matrix(sex, votes, weights)
@@ -273,6 +281,48 @@ def task3():
     plt.imshow(mat_map_sex, cmap=colors.ListedColormap(colors_list[:3]))
     plt.colorbar()
     plt.title("Sex")
+    plt.show()
+
+    """
+    plt.figure(3)
+
+    mp_attr_names = ["Party", "District", "Sex"]
+    # votes = np.genfromtxt('data/votes.dat', delimiter=',').reshape(349, 31)
+    party = np.genfromtxt('data/mpparty.dat', comments='%', dtype=np.uint8)
+    district = np.genfromtxt('data/mpdistrict.dat', comments='%', dtype=np.uint8)
+    sex = np.genfromtxt('data/mpsex.dat', comments='%', dtype=np.uint8)
+    mp_attrs = np.column_stack((party, district, sex))
+    mp_attr_levels = [
+        ["No Party", "The Moderate Party", "Liberal People's Party", "The Social Democrats", "The Left Party",
+         "The Greens", "Christian Democrats", "Centre Party"],
+        ["District " + str(d) for d in np.unique(district)],
+        ["Male", "Female"]]
+
+    # Iterate feature names
+    for attr in range(len(mp_attr_names)):
+        fig = plt.figure(figsize=(5, 5))
+        for i, row in enumerate(votes):
+            attributes = row
+            distances = np.linalg.norm(weights - attributes, axis=1)
+            min_dist_ind = np.argmin(distances)
+
+        # Iterate unique values in that feature
+        for val in np.unique(mp_attrs[:, attr]):
+            # Find the output node assigned to each minister with that feature value
+            x, y = np.unravel_index(predicted_output_node[mp_attrs[:, attr] == val], (10, 10))
+
+            # Plot the position in output space of each minister with that feature value
+            plt.scatter(noisy_index(x), noisy_index(y), s=20, alpha=1, label=mp_attr_levels[attr][val - 1])
+
+        # Edit the plot
+        plt.title(mp_attr_names[attr], fontsize=30, y=1.02)
+        plt.xticks(np.arange(-0.5, 10 - 0.5, 1), labels=[])
+        plt.yticks(np.arange(-0.5, 10 - 0.5, 1), labels=[])
+        plt.grid(True)
+        plt.xlim([-0.5, 10 - 0.5])
+        plt.ylim([-0.5, 10 - 0.5])
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
     plt.show()
 
 
