@@ -265,12 +265,13 @@ def task3():
     '''
     colors_list = ["#FFFFFF", "#652A0E", "#52BDEC", "#006AB3", "#E8112d", "#870000", "#83CF39", "#000077", "#009933"]
     color_map = colors.ListedColormap(colors_list)
-
+    """
     plt.figure(1)
     plt.imshow(mat_map_party, cmap=color_map, alpha=0.8)
     plt.colorbar(spacing="proportional")
     plt.colorbar().ax.tick_params(labelsize=10)
     plt.title("Party")
+    
 
     qrates = list("ABCDEFG")
     norm = colors.BoundaryNorm(np.linspace(-3.5, 3.5, 8), 7)
@@ -296,7 +297,7 @@ def task3():
 
     """
 
-    '''
+    
     plt.figure(3)
 
     mp_attr_names = ["Party", "District", "Sex"]
@@ -306,14 +307,19 @@ def task3():
     sex = np.genfromtxt('data/mpsex.dat', comments='%', dtype=np.uint8)
     mp_attrs = np.column_stack((party, district, sex))
     mp_attr_levels = [
-        ["No Party", "The Moderate Party", "Liberal People's Party", "The Social Democrats", "The Left Party",
-         "The Greens", "Christian Democrats", "Centre Party"],
+        ["no party", "m", "fp", "s", "v",
+         "mp", "kd", "c"],
         ["District " + str(d) for d in np.unique(district)],
         ["Male", "Female"]]
-
+    plot_colors = [
+        ["black", "#52BDEC", "#006AB3", "#E8112d", "pink", "#83CF39", "#000077", "#009933"],
+        [],
+        []
+    ]
     # Iterate feature names
     for attr in range(len(mp_attr_names)):
         fig = plt.figure(figsize=(5, 5))
+
         for i, row in enumerate(votes):
             attributes = row
             distances = np.linalg.norm(weights - attributes, axis=1)
@@ -325,7 +331,10 @@ def task3():
             x, y = np.unravel_index(predicted_output_node[mp_attrs[:, attr] == val], (10, 10))
 
             # Plot the position in output space of each minister with that feature value
-            plt.scatter(noisy_index(x), noisy_index(y), s=20, alpha=1, label=mp_attr_levels[attr][val - 1])
+            if attr == 0:
+                plt.scatter(noisy_index(x), noisy_index(y), s=20, alpha=1, label=mp_attr_levels[attr][val - 1], c=plot_colors[attr][val - 1])
+            else:
+                plt.scatter(noisy_index(x), noisy_index(y), s=20, alpha=1, label=mp_attr_levels[attr][val - 1])
 
         # Edit the plot
         plt.title(mp_attr_names[attr], fontsize=30, y=1.02)
@@ -335,8 +344,7 @@ def task3():
         plt.xlim([-0.5, 10 - 0.5])
         plt.ylim([-0.5, 10 - 0.5])
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-
-    '''
+        plt.tight_layout()
     plt.show()
 
 
