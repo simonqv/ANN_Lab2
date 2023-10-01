@@ -244,6 +244,7 @@ def task3():
 
     # TODO: REPEAT FOR ALL (sex, district, (names?))
     weights, predicted_output_node, order_inputs, = SOM_alg(votes, init_w.copy())
+    print(weights.shape)
     node_matrix_all_party = creat_node_matrix(party, votes, weights)
     mat_map_party = create_mat_map(node_matrix_all_party)
     print(mat_map_party)
@@ -267,10 +268,14 @@ def task3():
     color_map = colors.ListedColormap(colors_list)
 
     plt.figure(1)
-    plt.imshow(mat_map_party, cmap=color_map, alpha=0.8)
-    plt.colorbar(ticks=[]).ax.tick_params(labelsize=10)
-    plt.title("Party")
-
+    fig, ax = plt.subplots()
+    cax = ax.imshow(mat_map_party, cmap=color_map, alpha=0.8) 
+    ax.set_title("Majority Party for each Node")
+    cbar = fig.colorbar(cax, ticks=[-1, 0, 1, 2, 3, 4, 5, 6, 7], orientation="horizontal")
+    cbar.ax.set_xticklabels(["No win", "No party", "M", "FP", "S", "V", "MP", "KD", "C"])
+    ax.set_yticks([])
+    ax.set_xticks([])
+    plt.show()
     # ---- Sex ------
     node_matrix_all_sex = creat_node_matrix(sex, votes, weights)
     mat_map_sex = create_mat_map(node_matrix_all_sex)
@@ -351,8 +356,8 @@ def task3():
 
 def main():
     # task1()
-    # task2()
-    task3()
+    task2()
+    # task3()
 
 
 main()
