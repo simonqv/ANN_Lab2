@@ -4,7 +4,7 @@ from collections import Counter
 import matplotlib.colors as colors
 import matplotlib
 
-EPOCHS = 10
+EPOCHS = 6
 ETA = 0.2
 
 
@@ -217,7 +217,7 @@ def task2():
 
     init_w = np.random.rand(SOM_dimensions[0], SOM_dimensions[1])
 
-    w, _, _ = SOM_alg(data, init_w.copy(), task2_flag=True)
+    w, _, _ = SOM_alg(data, init_w.copy())
 
     # plt.scatter(init_w[:,0], init_w[:,1], c="red", alpha=0.1)
     plt.scatter(w[:, 0], w[:, 1], label="SOM nodes")
@@ -267,10 +267,14 @@ def task3():
     color_map = colors.ListedColormap(colors_list)
 
     plt.figure(1)
-    plt.imshow(mat_map_party, cmap=color_map, alpha=0.8)
-    plt.colorbar(ticks=[]).ax.tick_params(labelsize=10)
-    plt.title("Party")
-
+    fig, ax = plt.subplots()
+    cax = ax.imshow(mat_map_party, cmap=color_map, alpha=0.8)
+    ax.set_title("Majority Party for each Node")
+    cbar = fig.colorbar(cax, ticks=[-1, 0, 1, 2, 3, 4, 5, 6, 7], orientation="horizontal")
+    cbar.ax.set_xticklabels(["No win", "No party", "M", "FP", "S", "V", "MP", "KD", "C"])
+    ax.set_yticks([])
+    ax.set_xticks([])
+    plt.show()
     # ---- Sex ------
     node_matrix_all_sex = creat_node_matrix(sex, votes, weights)
     mat_map_sex = create_mat_map(node_matrix_all_sex)

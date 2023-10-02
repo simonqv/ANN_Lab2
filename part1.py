@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import plotter
 import sys
 
-SIGMA2 = 0.2  # necessary for 4 nodes but even better with higher
+SIGMA2 = 1.5  # necessary for 4 nodes but even better with higher
 EPOCH = 100
 ETA = 0.1
 
@@ -296,12 +296,7 @@ def task1():
     plt.show()
 
     # train the network by adjusting weights (least square error)
-    # Init weights
 
-    # not necessary rn
-    # init_w_m1 = np.random.normal(0, 0.5, len(m1))
-    # init_w_m2 = np.random.normal(0, 0.5, len(m2))
-    # init_w_m3 = np.random.normal(0, 0.5, len(m3))
 
 
     # ------ SIN --------
