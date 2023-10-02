@@ -4,7 +4,7 @@ from collections import Counter
 import matplotlib.colors as colors
 import matplotlib
 
-EPOCHS = 6
+EPOCHS = 10
 ETA = 0.2
 
 
@@ -217,7 +217,7 @@ def task2():
 
     init_w = np.random.rand(SOM_dimensions[0], SOM_dimensions[1])
 
-    w, _, _ = SOM_alg(data, init_w.copy())
+    w, _, _ = SOM_alg(data, init_w.copy(), task2_flag=True)
 
     # plt.scatter(init_w[:,0], init_w[:,1], c="red", alpha=0.1)
     plt.scatter(w[:, 0], w[:, 1], label="SOM nodes")
@@ -243,7 +243,7 @@ def task3():
     init_w = np.random.rand(weight_dimensions[0], weight_dimensions[1])
 
     # TODO: REPEAT FOR ALL (sex, district, (names?))
-    weights, predicted_output_node, order_inputs, = SOM_alg(votes, init_w.copy())
+    weights, predicted_output_node, order_inputs, = SOM_alg(votes, init_w.copy(), task3_flag=True)
     node_matrix_all_party = creat_node_matrix(party, votes, weights)
     mat_map_party = create_mat_map(node_matrix_all_party)
     print(mat_map_party)
